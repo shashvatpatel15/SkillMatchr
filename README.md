@@ -1,11 +1,6 @@
-<div align="center">
-  <img src="https://img.shields.io/badge/Status-Hackathon_Ready-success" />
-  <img src="https://img.shields.io/badge/Powered_By-Google_Gemini-blue" />
-  <img src="https://img.shields.io/badge/Stack-FastAPI_%7C_React-black" />
-  <br />
-  <h1>🎯 HireOps</h1>
+<h1>🎯 HireOps</h1>
   <p><strong>Multi-Agent AI System for Intelligent Resume Parsing, Skill-Set Matching, and API-Ready Talent Intelligence.</strong></p>
-  <p><i>Developed for Prama Innovations India Pvt. Ltd. (Problem Statement 10)</i></p>
+  <p><i>Developed by Team SteriodPrompts</i></p>
 </div>
 
 ---
