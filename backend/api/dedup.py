@@ -55,7 +55,12 @@ async def list_dedup_queue(
         )
         .join(candidate_a, DedupQueue.candidate_a_id == candidate_a.c.id)
         .join(candidate_b, DedupQueue.candidate_b_id == candidate_b.c.id)
-        .where(DedupQueue.status == status_filter)
+        .where(
+            and_(
+                DedupQueue.status == status_filter,
+                candidate_a.c.created_by == current_user.id
+            )
+        )
         .order_by(DedupQueue.composite_score.desc())
         .offset(offset)
         .limit(limit)

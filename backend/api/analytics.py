@@ -22,18 +22,21 @@ async def analytics_overview(
     # Total candidates
     total_candidates_result = await db.execute(
         select(func.count(Candidate.id))
+        .where(Candidate.created_by == current_user.id)
     )
     total_candidates = total_candidates_result.scalar_one()
 
     # Total shortlists
     total_shortlists_result = await db.execute(
         select(func.count(Shortlist.id))
+        .where(Shortlist.created_by == current_user.id)
     )
     total_shortlists = total_shortlists_result.scalar_one()
 
     # Candidates by source
     source_result = await db.execute(
         select(Candidate.source, func.count(Candidate.id))
+        .where(Candidate.created_by == current_user.id)
         .group_by(Candidate.source)
         .order_by(func.count(Candidate.id).desc())
     )
@@ -48,6 +51,7 @@ async def analytics_overview(
             cast(Candidate.created_at, Date).label("date"),
             func.count(Candidate.id).label("count"),
         )
+        .where(Candidate.created_by == current_user.id)
         .group_by(cast(Candidate.created_at, Date))
         .order_by(cast(Candidate.created_at, Date).desc())
         .limit(30)
