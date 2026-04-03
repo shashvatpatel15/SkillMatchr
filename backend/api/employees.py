@@ -19,10 +19,12 @@ async def create_employee(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new employee record."""
-    # Check for duplicate email
+    """Create a new employee record (scoped to current user)."""
+    # Check for duplicate email within this user's employees
     existing = await db.execute(
-        select(Employee).where(Employee.email == body.email)
+        select(Employee)
+        .where(Employee.email == body.email)
+        .where(Employee.created_by == current_user.id)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Employee with this email already exists")
@@ -32,6 +34,7 @@ async def create_employee(
         email=body.email,
         department=body.department,
         company=body.company,
+        created_by=current_user.id,
     )
     db.add(employee)
     await db.commit()
@@ -52,8 +55,12 @@ async def list_employees(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all employees."""
-    stmt = select(Employee).order_by(Employee.name)
+    """List employees created by the current user (multi-tenant)."""
+    stmt = (
+        select(Employee)
+        .where(Employee.created_by == current_user.id)
+        .order_by(Employee.name)
+    )
     result = await db.execute(stmt)
     employees = result.scalars().all()
     return [

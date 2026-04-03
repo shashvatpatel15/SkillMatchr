@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
+import useWebSocket from '../hooks/useWebSocket';
 
 /* ─── helpers ──────────────────────────────────── */
 const initials = (name = '') =>
@@ -149,6 +150,18 @@ export default function CandidatesPage() {
   const [shortlists, setShortlists]               = useState([]);
   const [toast, setToast]                         = useState(null);
 
+  const { lastMessage } = useWebSocket();
+
+  // Watch for real-time ingestion events
+  useEffect(() => {
+    if (lastMessage?.type === 'INGESTION_COMPLETE' || lastMessage?.type === 'DEDUP_UPDATE') {
+      fetchCandidates();
+      if (lastMessage.type === 'INGESTION_COMPLETE') {
+        showToast(`Candidate ${lastMessage.candidate_name || 'uploaded'} ready!`, 'success');
+      }
+    }
+  }, [lastMessage]);
+
   const modalRef = useRef(null);
 
   const showToast = (msg, type = 'success') => {
@@ -191,7 +204,8 @@ export default function CandidatesPage() {
       setCandidates(res.data.results || []);
       setTotal(res.data.total || 0);
       setError(null);
-    } catch {
+    } catch (err) {
+      console.error('Failed to load candidates:', err);
       setError('Failed to load candidates. Make sure the backend is running.');
     } finally {
       setLoading(false);

@@ -141,9 +141,11 @@ async def add_candidate_to_shortlist(
     if not sl_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Shortlist not found")
 
-    # Verify candidate exists
+    # Verify candidate exists AND belongs to current user
     c_result = await db.execute(
-        select(Candidate).where(Candidate.id == body.candidate_id)
+        select(Candidate)
+        .where(Candidate.id == body.candidate_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = c_result.scalar_one_or_none()
     if not candidate:
@@ -196,7 +198,16 @@ async def remove_candidate_from_shortlist(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Remove a candidate from a shortlist."""
+    """Remove a candidate from a shortlist (tenant-scoped)."""
+    # Verify shortlist belongs to current user
+    sl_result = await db.execute(
+        select(Shortlist)
+        .where(Shortlist.id == shortlist_id)
+        .where(Shortlist.created_by == current_user.id)
+    )
+    if not sl_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Shortlist not found")
+
     result = await db.execute(
         select(ShortlistCandidate).where(
             ShortlistCandidate.shortlist_id == shortlist_id,

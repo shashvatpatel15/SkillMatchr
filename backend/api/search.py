@@ -16,10 +16,11 @@ async def search_candidates(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Natural language candidate search powered by Groq + pgvector."""
+    """Natural language candidate search powered by Groq + pgvector (tenant-scoped)."""
     result = await search_graph.ainvoke({
         "user_query": body.query,
         "session": db,
+        "user_id": str(current_user.id),
     })
 
     return SearchResponse(

@@ -61,6 +61,7 @@ async def find_potential_matches(
     embedding: list[float] | None,
     exclude_id: uuid.UUID | None = None,
     limit: int = 20,
+    user_id: str | None = None,
 ) -> list[Candidate]:
     """Query the DB for candidates that could be duplicates.
 
@@ -119,6 +120,8 @@ async def find_potential_matches(
     query = select(Candidate).where(
         Candidate.ingestion_status.in_(_DEDUP_STATUSES)
     )
+    if user_id:
+        query = query.where(Candidate.created_by == uuid.UUID(user_id))
     if exclude_id:
         query = query.where(Candidate.id != exclude_id)
 
@@ -141,6 +144,8 @@ async def find_potential_matches(
             .where(Candidate.embedding.isnot(None))
             .where(Candidate.ingestion_status.in_(_DEDUP_STATUSES))
         )
+        if user_id:
+            embedding_query = embedding_query.where(Candidate.created_by == uuid.UUID(user_id))
         if exclude_id:
             embedding_query = embedding_query.where(Candidate.id != exclude_id)
 

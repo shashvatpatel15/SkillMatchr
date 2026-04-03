@@ -12,6 +12,7 @@ with <10 years or no AWS experience, regardless of embedding similarity.
 
 from __future__ import annotations
 
+import uuid
 from sqlalchemy import select, and_, or_, func, cast, String, case, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,7 +34,7 @@ _STOP_WORDS = frozenset({
 })
 
 
-def _build_strict_filters(intent: SearchIntent) -> list:
+def _build_strict_filters(intent: SearchIntent, user_id: str | None = None) -> list:
     """Build hard-constraint SQL WHERE clauses from the parsed intent.
 
     These filters are applied BEFORE any ranking — candidates that don't
@@ -42,6 +43,10 @@ def _build_strict_filters(intent: SearchIntent) -> list:
     conditions: list = [
         Candidate.ingestion_status.in_(_VALID_STATUSES),
     ]
+
+    # ── Multi-tenancy filter ────────────────────────────────────────
+    if user_id:
+        conditions.append(Candidate.created_by == uuid.UUID(user_id))
 
     # ── Strict experience filter ────────────────────────────────────
     if intent.min_experience_years > 0:
@@ -189,6 +194,7 @@ async def search_candidates(
     session: AsyncSession,
     intent: SearchIntent,
     limit: int = 20,
+    user_id: str | None = None,
 ) -> list[dict]:
     """Execute hybrid search: strict SQL pre-filter → semantic/keyword rank.
 
@@ -197,7 +203,7 @@ async def search_candidates(
     qualifying candidates is done by embedding similarity (if available)
     or keyword relevance score.
     """
-    strict_conditions = _build_strict_filters(intent)
+    strict_conditions = _build_strict_filters(intent, user_id=user_id)
 
     # ── Try semantic ranking first (requires embeddings) ────────────
     try:

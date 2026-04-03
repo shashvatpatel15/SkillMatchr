@@ -20,6 +20,7 @@ class SearchState(TypedDict, total=False):
     intent: dict
     results: list[dict]
     session: AsyncSession
+    user_id: str | None
     error: str | None
 
 
@@ -41,6 +42,7 @@ async def execute_search_node(state: SearchState) -> dict:
         results = await search_candidates(
             session=state["session"],
             intent=intent,
+            user_id=state.get("user_id"),
         )
         return {"results": results}
     except Exception as e:

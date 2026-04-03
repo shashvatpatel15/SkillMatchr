@@ -108,6 +108,7 @@ async def run_dedup_check_node(state: IngestionState) -> dict:
             session=session,
             parsed_data=parsed_data,
             embedding=embedding,
+            user_id=state.get("user_id"),
         )
 
     return {

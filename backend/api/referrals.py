@@ -2,7 +2,7 @@ import uuid
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.auth import get_current_user
@@ -29,27 +29,44 @@ async def create_referral(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a referral. Creates candidate if new, links to job, logs activity."""
-    # Validate employee exists
-    employee = await db.get(Employee, uuid.UUID(body.employee_id))
+    # Validate employee exists AND belongs to current user
+    result = await db.execute(
+        select(Employee)
+        .where(Employee.id == uuid.UUID(body.employee_id))
+        .where(Employee.created_by == current_user.id)
+    )
+    employee = result.scalar_one_or_none()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Validate job exists
-    job = await db.get(Job, uuid.UUID(body.job_id))
+    # Validate job exists AND belongs to current user
+    result = await db.execute(
+        select(Job)
+        .where(Job.id == uuid.UUID(body.job_id))
+        .where(Job.created_by == current_user.id)
+    )
+    job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     # Find or create candidate
     if body.candidate_id:
-        candidate = await db.get(Candidate, uuid.UUID(body.candidate_id))
+        result = await db.execute(
+            select(Candidate)
+            .where(Candidate.id == uuid.UUID(body.candidate_id))
+            .where(Candidate.created_by == current_user.id)
+        )
+        candidate = result.scalar_one_or_none()
         if not candidate:
             raise HTTPException(status_code=404, detail="Candidate not found")
     else:
-        # Check if candidate exists by email
+        # Check if candidate exists by email within this user's candidates
         candidate = None
         if body.candidate_email:
             result = await db.execute(
-                select(Candidate).where(Candidate.email == body.candidate_email)
+                select(Candidate)
+                .where(Candidate.email == body.candidate_email)
+                .where(Candidate.created_by == current_user.id)
             )
             candidate = result.scalar_one_or_none()
 
@@ -72,6 +89,7 @@ async def create_referral(
         employee_id=employee.id,
         candidate_id=candidate.id,
         job_id=job.id,
+        created_by=current_user.id,
         status="referred",
         notes=body.notes,
     )
@@ -121,20 +139,25 @@ async def referral_analytics(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get referral analytics: top referrers, success rate, department breakdown."""
-    # Total referrals
-    total_result = await db.execute(select(func.count(Referral.id)))
+    """Get referral analytics scoped to current user."""
+    # Total referrals for this user
+    total_result = await db.execute(
+        select(func.count(Referral.id))
+        .where(Referral.created_by == current_user.id)
+    )
     total_referrals = total_result.scalar() or 0
 
-    # Total hires
+    # Total hires for this user
     hired_result = await db.execute(
-        select(func.count(Referral.id)).where(Referral.status == "hired")
+        select(func.count(Referral.id))
+        .where(Referral.created_by == current_user.id)
+        .where(Referral.status == "hired")
     )
     total_hires = hired_result.scalar() or 0
 
     success_rate = round(total_hires / total_referrals * 100, 1) if total_referrals > 0 else 0.0
 
-    # Top referrers
+    # Top referrers (scoped)
     top_ref_stmt = (
         select(
             Employee.name,
@@ -143,6 +166,7 @@ async def referral_analytics(
             func.count(Referral.id).filter(Referral.status == "hired").label("hires"),
         )
         .join(Referral, Employee.id == Referral.employee_id)
+        .where(Referral.created_by == current_user.id)
         .group_by(Employee.id, Employee.name, Employee.department)
         .order_by(func.count(Referral.id).desc())
         .limit(10)
@@ -158,13 +182,14 @@ async def referral_analytics(
         for row in top_ref_result.all()
     ]
 
-    # Department breakdown
+    # Department breakdown (scoped)
     dept_stmt = (
         select(
             Employee.department,
             func.count(Referral.id).label("count"),
         )
         .join(Referral, Employee.id == Referral.employee_id)
+        .where(Referral.created_by == current_user.id)
         .where(Employee.department.isnot(None))
         .group_by(Employee.department)
         .order_by(func.count(Referral.id).desc())
@@ -175,12 +200,13 @@ async def referral_analytics(
         for row in dept_result.all()
     ]
 
-    # Status breakdown
+    # Status breakdown (scoped)
     status_stmt = (
         select(
             Referral.status,
             func.count(Referral.id).label("count"),
         )
+        .where(Referral.created_by == current_user.id)
         .group_by(Referral.status)
     )
     status_result = await db.execute(status_stmt)
@@ -204,12 +230,13 @@ async def list_referrals(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all referrals with employee/candidate/job details."""
+    """List all referrals for the current user (multi-tenant)."""
     stmt = (
         select(Referral, Employee.name, Candidate.full_name, Job.title)
         .join(Employee, Referral.employee_id == Employee.id)
         .join(Candidate, Referral.candidate_id == Candidate.id)
         .join(Job, Referral.job_id == Job.id)
+        .where(Referral.created_by == current_user.id)
         .order_by(Referral.referred_at.desc())
     )
     result = await db.execute(stmt)
@@ -240,13 +267,14 @@ async def get_referral(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single referral by ID."""
+    """Get a single referral by ID (tenant-scoped)."""
     stmt = (
         select(Referral, Employee.name, Candidate.full_name, Job.title)
         .join(Employee, Referral.employee_id == Employee.id)
         .join(Candidate, Referral.candidate_id == Candidate.id)
         .join(Job, Referral.job_id == Job.id)
         .where(Referral.id == referral_id)
+        .where(Referral.created_by == current_user.id)
     )
     result = await db.execute(stmt)
     row = result.one_or_none()
@@ -277,12 +305,17 @@ async def update_referral_status(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update a referral's status."""
+    """Update a referral's status (tenant-scoped)."""
     valid_statuses = {"referred", "under_review", "interview", "hired", "rejected"}
     if new_status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
 
-    referral = await db.get(Referral, referral_id)
+    result = await db.execute(
+        select(Referral)
+        .where(Referral.id == referral_id)
+        .where(Referral.created_by == current_user.id)
+    )
+    referral = result.scalar_one_or_none()
     if not referral:
         raise HTTPException(status_code=404, detail="Referral not found")
 

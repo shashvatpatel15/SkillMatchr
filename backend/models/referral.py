@@ -21,6 +21,9 @@ class Referral(Base, UUIDPrimaryKey):
     job_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("jobs.id"), nullable=False
     )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     status: Mapped[str] = mapped_column(
         String(30), nullable=False, default="referred", index=True
     )

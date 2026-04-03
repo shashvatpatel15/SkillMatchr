@@ -97,12 +97,16 @@ async def get_dedup_queue_item(
     if not queue_item:
         raise HTTPException(status_code=404, detail="Queue item not found")
 
-    # Fetch both candidates
+    # Fetch both candidates and verify ownership
     ca_result = await db.execute(
-        select(Candidate).where(Candidate.id == queue_item.candidate_a_id)
+        select(Candidate)
+        .where(Candidate.id == queue_item.candidate_a_id)
+        .where(Candidate.created_by == current_user.id)
     )
     cb_result = await db.execute(
-        select(Candidate).where(Candidate.id == queue_item.candidate_b_id)
+        select(Candidate)
+        .where(Candidate.id == queue_item.candidate_b_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate_a = ca_result.scalar_one_or_none()
     candidate_b = cb_result.scalar_one_or_none()
@@ -253,10 +257,11 @@ async def retroactive_dedup_scan(
 
     Only creates dedup_queue entries for NEW pairs not already in the queue.
     """
-    # Fetch all active candidates
+    # Fetch all active candidates for this user only
     result = await db.execute(
         select(Candidate)
         .where(Candidate.ingestion_status.in_(["completed", "needs_review", "ingested", "pending_review"]))
+        .where(Candidate.created_by == current_user.id)
         .order_by(Candidate.created_at)
     )
     candidates = list(result.scalars().all())
@@ -352,9 +357,11 @@ async def get_merge_history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get merge audit trail."""
+    """Get merge audit trail (scoped to current user's candidates)."""
     result = await db.execute(
         select(CandidateMergeHistory)
+        .join(Candidate, CandidateMergeHistory.primary_candidate_id == Candidate.id)
+        .where(Candidate.created_by == current_user.id)
         .order_by(CandidateMergeHistory.created_at.desc())
         .offset(offset)
         .limit(limit)

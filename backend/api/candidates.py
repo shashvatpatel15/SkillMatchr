@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-# Add required sqlalchemy imports
-from sqlalchemy import select, func, or_, cast, String
+from sqlalchemy import select, func, or_, cast, String, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.auth import get_current_user
 from backend.core.database import get_db
 from backend.models.user import User
-from backend.models.candidate import Candidate
+from backend.models.candidate import Candidate, CandidateMergeHistory
+from backend.models.shortlist import ShortlistCandidate
+from backend.models.dedup import DedupQueue
 from backend.schemas.candidate import (
     CandidateListItem,
     CandidateListResponse,
@@ -142,6 +143,7 @@ async def get_similar(
         candidate_id=candidate_id,
         limit=limit,
         threshold=threshold,
+        user_id=str(current_user.id),
     )
 
     # Convert similarity_score to percentage for frontend
@@ -250,7 +252,7 @@ async def delete_candidate(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a candidate."""
+    """Delete a candidate and all related records."""
     result = await db.execute(
         select(Candidate)
         .where(Candidate.id == candidate_id)
@@ -259,6 +261,24 @@ async def delete_candidate(
     candidate = result.scalar_one_or_none()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
+
+    # Remove related records to avoid FK constraint violations
+    await db.execute(
+        delete(ShortlistCandidate).where(ShortlistCandidate.candidate_id == candidate.id)
+    )
+    await db.execute(
+        delete(DedupQueue).where(
+            or_(DedupQueue.candidate_a_id == candidate.id, DedupQueue.candidate_b_id == candidate.id)
+        )
+    )
+    await db.execute(
+        delete(CandidateMergeHistory).where(
+            or_(
+                CandidateMergeHistory.primary_candidate_id == candidate.id,
+                CandidateMergeHistory.merged_candidate_id == candidate.id,
+            )
+        )
+    )
 
     await db.delete(candidate)
     await db.commit()

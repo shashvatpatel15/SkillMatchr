@@ -17,12 +17,16 @@ async def list_activity(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Fetch the latest activity logs."""
-    count_result = await db.execute(select(func.count(ActivityLog.id)))
+    """Fetch the latest activity logs for the current user (multi-tenant)."""
+    count_result = await db.execute(
+        select(func.count(ActivityLog.id))
+        .where(ActivityLog.user_id == current_user.id)
+    )
     total = count_result.scalar_one()
 
     result = await db.execute(
         select(ActivityLog)
+        .where(ActivityLog.user_id == current_user.id)
         .order_by(ActivityLog.created_at.desc())
         .limit(limit)
     )

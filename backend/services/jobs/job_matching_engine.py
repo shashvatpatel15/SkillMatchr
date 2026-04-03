@@ -16,6 +16,7 @@ skill_match (0.45) and experience_match (0.30) so matching still works.
 from __future__ import annotations
 
 import logging
+import uuid as _uuid_mod
 
 import numpy as np
 from sqlalchemy import select, and_
@@ -117,6 +118,7 @@ async def match_candidates_to_job(
     session: AsyncSession,
     job: Job,
     top_k: int = 20,
+    user_id: str | None = None,
 ) -> list[dict]:
     """Find and rank the best candidates for a job opening.
 
@@ -148,11 +150,13 @@ async def match_candidates_to_job(
     if job_emb is not None:
         try:
             distance = Candidate.embedding.cosine_distance(job_emb)
+            user_filter = [Candidate.created_by == _uuid_mod.UUID(user_id)] if user_id else []
             stmt = (
                 select(Candidate, distance.label("distance"))
                 .where(and_(
                     Candidate.ingestion_status.in_(_VALID_STATUSES),
                     Candidate.embedding.isnot(None),
+                    *user_filter,
                 ))
                 .order_by(distance)
                 .limit(200)
@@ -182,10 +186,12 @@ async def match_candidates_to_job(
             logger.warning("Semantic pass failed: %s", e)
 
     # ── Pass 2: Non-semantic fallback (all remaining candidates) ─────
+    user_filter = [Candidate.created_by == _uuid_mod.UUID(user_id)] if user_id else []
     stmt = (
         select(Candidate)
         .where(and_(
             Candidate.ingestion_status.in_(_VALID_STATUSES),
+            *user_filter,
         ))
         .limit(500)
     )
@@ -227,6 +233,7 @@ async def compare_candidates_for_job(
     session: AsyncSession,
     job: Job,
     candidate_ids: list[str],
+    user_id: str | None = None,
 ) -> list[dict]:
     """Compare specific candidates against a job with detailed metrics."""
     job_skills = job.skills_required if isinstance(job.skills_required, list) else []
@@ -245,7 +252,8 @@ async def compare_candidates_for_job(
     import uuid as _uuid
     uuids = [_uuid.UUID(cid) for cid in candidate_ids]
 
-    stmt = select(Candidate).where(Candidate.id.in_(uuids))
+    user_filter = [Candidate.created_by == _uuid_mod.UUID(user_id)] if user_id else []
+    stmt = select(Candidate).where(Candidate.id.in_(uuids), *user_filter)
     result = await session.execute(stmt)
     candidates = result.scalars().all()
 

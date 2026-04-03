@@ -1,4 +1,5 @@
-<h1>🎯 HireOps</h1>
+<div align="center">
+<h1>🎯 SkillMatchr</h1>
   <p><strong>Multi-Agent AI System for Intelligent Resume Parsing, Skill-Set Matching, and API-Ready Talent Intelligence.</strong></p>
   <p><i>Developed by Team SteriodPrompts</i></p>
 </div>
@@ -6,7 +7,7 @@
 ---
 
 ## ⚡ Overview
-Recruitment teams process thousands of diverse resumes daily. Current ATS (Applicant Tracking Systems) rely on rigid keyword matching that misses qualified candidates and surfaces irrelevant ones. **HireOps** solves this by leveraging a Multi-Agent AI architecture to ingest, normalize, and semantically match disparate candidate profiles against complex job descriptions in real time. 
+Recruitment teams process thousands of diverse resumes daily. Current ATS (Applicant Tracking Systems) rely on rigid keyword matching that misses qualified candidates and surfaces irrelevant ones. **SkillMatchr** solves this by leveraging a Multi-Agent AI architecture to ingest, normalize, and semantically match disparate candidate profiles against complex job descriptions in real time. 
 
 Built strictly with enterprise-grade architectures, this platform exposes the entire AI pipeline through robust REST APIs, webhooks, and a lightning-fast React frontend for talent managers.
 
@@ -22,11 +23,11 @@ Built strictly with enterprise-grade architectures, this platform exposes the en
 ### 2. High-Performance Front-end Dashboard
 * **Dynamic Applicant Indexing:** Server-side push-down filtering to instantly navigate tens of thousands of applicants seamlessly.
 * **Talent Gap Analysis:** Intelligent visual timelines of career trajectories and exact gap reporting for job mismatches.
-* **Modern UX:** Fully responsive, glassmorphic UI built using React, Vite, Framer Motion, and Tailwind CSS.
+* **Modern UX:** Fully responsive, glassmorphic UI built using React, Vite, Framer Motion, and CSS.
 
 ### 3. Production-Ready Deployment
 * **V1 REST API:** Fully swagger-documented `/api/v1/` endpoints.
-* **Fully Containerized:** Multi-stage `docker-compose` environment linking Redis, PostgreSQL, FastAPI, and Nginx.
+* **Cloud-hosted:** Backend on Render / Railway, Frontend on Vercel.
 
 ---
 
@@ -34,25 +35,24 @@ Built strictly with enterprise-grade architectures, this platform exposes the en
 
 | Domain | Technology |
 |---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, Recharts |
+| **Frontend** | React 18, Vite, Framer Motion, Recharts |
 | **Backend API** | Python 3.11+, FastAPI, Uvicorn, LangGraph |
 | **LLM & Embeddings** | Google Gemini `gemini-1.5-flash`, `gemini-embedding-001` |
 | **Database** | PostgreSQL (Supabase) with `pgvector` |
-| **Cache & Queue** | Redis (In-Memory queues & rate logic) |
-| **Infrastructure** | Docker, Nginx, Vercel, Render |
+| **Infrastructure** | Vercel, Render |
 
 ---
 
-## 💻 Local Setup from Scratch
+## 💻 Local Setup
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/HireOps.git
-cd HireOps
+git clone https://github.com/YourUsername/SkillMatchr.git
+cd SkillMatchr
 ```
 
 ### 2. Environment Variables
-You must set up your secrets inside `backend/.env`. Create the file using this template:
+Create `backend/.env` using this template:
 ```env
 # Database (Postgres)
 DATABASE_URL=postgresql+asyncpg://user:password@host:port/dbname
@@ -62,29 +62,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 JWT_SECRET=your_super_secret_string
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
-# Rate Limiting
-REDIS_URL=redis://localhost:6379
 # Allowed Origins
 CORS_ORIGIN=http://localhost:5173
 ```
 
-### 3. Option A: Run via Docker (Recommended)
-This will spin up both the FastAPI backend (port `8000`) and the Vite frontend (port `3000`).
-```bash
-docker-compose up --build -d
-```
-
-### 4. Option B: Run via Standard Terminal 
-**Backend Setup:**
+### 3. Backend
 ```bash
 cd backend
 python -m venv venv
-source venv/Scripts/activate # OR `venv\Scripts\activate` on Windows
+source venv/Scripts/activate   # OR venv\Scripts\activate on Windows
 pip install -r requirements.txt
 cd ..
 uvicorn backend.main:app --reload --port 8000
 ```
-**Frontend Setup:**
+
+### 4. Frontend
 ```bash
 cd frontend
 npm install
@@ -95,7 +87,7 @@ npm run dev
 
 ## 📡 API Endpoints (V1 Third-Party Layer)
 
-HireOps acts as an autonomous operating system capable of integration into any external client via Standard REST.
+SkillMatchr acts as an autonomous operating system capable of integration into any external client via Standard REST.
 _(Full OpenAPI / Swagger specification is available dynamically at `http://localhost:8000/docs`)_
 
 | Endpoint | Method | Description |
@@ -108,7 +100,7 @@ _(Full OpenAPI / Swagger specification is available dynamically at `http://local
 
 ---
 
-## 🌩 Serverless Deployment Architecture
+## 🌩 Deployment
 
 1. **Frontend (Vercel):** Connect your GitHub repo to Vercel, point the "Root Directory" to `frontend`, and inject the `VITE_API_URL` environment variable.
 2. **Backend (Render):** Deploy the `backend` folder as a standard Python Web Service. Use `uvicorn main:app --host 0.0.0.0 --port 10000` as the startup binding command.

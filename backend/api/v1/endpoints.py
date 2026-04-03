@@ -192,7 +192,9 @@ async def get_skill_profile(
 ):
     """Retrieve the full normalized skill profile for a candidate."""
     result = await db.execute(
-        select(Candidate).where(Candidate.id == uuid.UUID(candidate_id))
+        select(Candidate)
+        .where(Candidate.id == uuid.UUID(candidate_id))
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:
@@ -260,7 +262,9 @@ async def match_candidate(
     Returns match scores, gap analysis, and upskilling recommendations.
     """
     result = await db.execute(
-        select(Candidate).where(Candidate.id == uuid.UUID(body.candidate_id))
+        select(Candidate)
+        .where(Candidate.id == uuid.UUID(body.candidate_id))
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:
@@ -587,17 +591,22 @@ async def get_metrics(
     db: AsyncSession = Depends(get_db),
 ):
     """Return comprehensive evaluation metrics for the platform."""
-    # Count candidates
+    # Count candidates for this user
     total_candidates = (await db.execute(
         select(func.count(Candidate.id))
+        .where(Candidate.created_by == current_user.id)
     )).scalar() or 0
 
     completed = (await db.execute(
-        select(func.count(Candidate.id)).where(Candidate.ingestion_status == "completed")
+        select(func.count(Candidate.id))
+        .where(Candidate.ingestion_status == "completed")
+        .where(Candidate.created_by == current_user.id)
     )).scalar() or 0
 
     failed = (await db.execute(
-        select(func.count(Candidate.id)).where(Candidate.ingestion_status == "failed")
+        select(func.count(Candidate.id))
+        .where(Candidate.ingestion_status == "failed")
+        .where(Candidate.created_by == current_user.id)
     )).scalar() or 0
 
     # Agent traces stats

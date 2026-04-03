@@ -52,6 +52,7 @@ async def run_dedup_check(
     parsed_data: dict,
     embedding: list[float] | None,
     exclude_id: uuid.UUID | None = None,
+    user_id: str | None = None,
 ) -> DedupResult:
     """Run the full dedup pipeline: block -> score -> classify.
 
@@ -76,6 +77,7 @@ async def run_dedup_check(
         parsed_data=parsed_data,
         embedding=embedding,
         exclude_id=exclude_id,
+        user_id=user_id,
     )
 
     logger.info(

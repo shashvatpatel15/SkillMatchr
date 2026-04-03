@@ -2,6 +2,7 @@
 
 Given a target candidate's embedding, queries all other candidates
 and returns those above a similarity threshold, ranked by closeness.
+Scoped to the same user's candidates for multi-tenancy.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ async def get_similar_candidates(
     candidate_id: str,
     limit: int = 5,
     threshold: float = 0.75,
+    user_id: str | None = None,
 ) -> list[dict]:
     """Find candidates with similar profiles using pgvector cosine distance.
 
@@ -29,6 +31,7 @@ async def get_similar_candidates(
         limit: Max results to return.
         threshold: Minimum similarity score (0.0–1.0). Only candidates
                    above this threshold are returned.
+        user_id: If provided, only search within this user's candidates.
 
     Returns:
         List of dicts with candidate fields + similarity_score.
@@ -45,10 +48,10 @@ async def get_similar_candidates(
 
     target_embedding = list(row[0])
 
-    # Step 2: pgvector cosine distance against all other candidates
-    # cosine_distance returns 0 (identical) to 2 (opposite)
-    # similarity = 1.0 - distance, clamped to [0, 1]
+    # Step 2: pgvector cosine distance against other candidates (tenant-scoped)
     distance = Candidate.embedding.cosine_distance(target_embedding)
+
+    user_filter = [Candidate.created_by == uuid.UUID(user_id)] if user_id else []
 
     stmt = (
         select(
@@ -59,6 +62,7 @@ async def get_similar_candidates(
             Candidate.id != target_uuid,
             Candidate.embedding.isnot(None),
             Candidate.ingestion_status.in_(_VALID_STATUSES),
+            *user_filter,
         ))
         .order_by(distance)
         .limit(limit * 3)  # Over-fetch to filter by threshold

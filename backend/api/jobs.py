@@ -100,7 +100,7 @@ async def match_candidates(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    results = await match_candidates_to_job(db, job, top_k=body.top_k)
+    results = await match_candidates_to_job(db, job, top_k=body.top_k, user_id=str(current_user.id))
 
     await ws_manager.broadcast({
         "type": "JOB_MATCH_COMPLETED",
@@ -145,7 +145,7 @@ async def compare_candidates_endpoint(
     if not body.candidate_ids:
         raise HTTPException(status_code=400, detail="No candidate IDs provided")
 
-    results = await compare_candidates_for_job(db, job, body.candidate_ids)
+    results = await compare_candidates_for_job(db, job, body.candidate_ids, user_id=str(current_user.id))
 
     return CompareResponse(
         job_id=str(job.id),
@@ -155,6 +155,23 @@ async def compare_candidates_endpoint(
             for r in results
         ],
     )
+
+
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_job(
+    job_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a job. Only the owner can delete their own jobs."""
+    job = (await db.execute(
+        select(Job).where(Job.id == job_id).where(Job.created_by == current_user.id)
+    )).scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    await db.delete(job)
+    await db.commit()
 
 
 def _job_to_response(job: Job) -> JobResponse:
