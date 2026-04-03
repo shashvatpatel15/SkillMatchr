@@ -12,26 +12,25 @@ passlib[bcrypt]==1.7.4
 PyJWT==2.10.1
 google-auth==2.38.0
 python-multipart==0.0.20
-langchain>=0.3.14
-langgraph>=0.2.60
-langchain-google-genai>=2.0.8
-pdfplumber>=0.11.4
-pdfminer.six>=20221105
-python-docx>=1.1.2
-thefuzz[speedup]>=0.22.1
-google-api-python-client>=2.159.0
-google-auth-httplib2>=0.2.0
-google-auth-oauthlib>=1.2.1
-beautifulsoup4>=4.12.3
-langchain-groq>=0.3.0
-websockets>=14.0
-google-genai>=1.7.0
-# Redis for job queuing and caching
-redis>=5.0.0
-# ChromaDB for vector skill embeddings
-chromadb>=0.5.0
-# Sentence-transformers for local embeddings (alternative to Gemini)
-sentence-transformers>=2.7.0
-# Numpy for vector operations
-numpy>=1.26.0
 
+# Locked Generative AI and Scraping Ecosystem (to permanently stop pip backtracking)
+langchain==1.2.14
+langgraph==1.1.4
+langchain-google-genai==4.1.1
+pdfplumber==0.11.9
+pdfminer.six==20251230
+python-docx==1.2.0
+thefuzz[speedup]==0.22.1
+google-api-python-client==2.193.0
+google-auth-httplib2==0.3.1
+google-auth-oauthlib==1.3.1
+beautifulsoup4==4.14.3
+langchain-groq==1.1.2
+websockets==15.0.1
+google-genai==1.55.0
+numpy==2.4.4
+
+# Commented heavy local embeddings since Gemini runs natively
+# redis>=5.0.0
+# chromadb>=0.5.0
+# sentence-transformers>=2.7.0
