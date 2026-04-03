@@ -250,6 +250,18 @@ export default function CandidatesPage() {
     }
   };
 
+  const deleteSelected = async () => {
+    if (!confirm(`Permanently delete ${selectedIds.size} selected candidates?`)) return;
+    try {
+      await Promise.allSettled(Array.from(selectedIds).map(id => api.delete(`/api/candidates/${id}`)));
+      setSelectedIds(new Set());
+      fetchCandidates();
+      showToast(`${selectedIds.size} candidates deleted`);
+    } catch {
+      showToast('Failed to delete some candidates', 'error');
+    }
+  };
+
   const addToShortlist = async (shortlistId, candidateId) => {
     try {
       await api.post(`/api/shortlists/${shortlistId}/candidates`, { candidate_id: candidateId });
@@ -333,7 +345,10 @@ export default function CandidatesPage() {
                   {shortlists.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               )}
-              <button onClick={() => setSelectedIds(new Set())} className="text-indigo-400 hover:text-indigo-700">
+              <button onClick={deleteSelected} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors ml-2">
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+              <button onClick={() => setSelectedIds(new Set())} className="text-indigo-400 hover:text-indigo-700 ml-1">
                 <X className="w-3.5 h-3.5" />
               </button>
             </motion.div>
