@@ -149,6 +149,49 @@ async def get_similar(
     return {"candidate_id": candidate_id, "total": len(results), "results": results}
 
 
+@router.get("/{candidate_id}/analysis")
+async def get_candidate_analysis(
+    candidate_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run the skill normalization agent on a candidate and return the full analysis track."""
+    from backend.services.skills.normalization_agent import normalization_graph
+
+    result = await db.execute(
+        select(Candidate).where(Candidate.id == candidate_id)
+    )
+    candidate = result.scalar_one_or_none()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    if not candidate.skills:
+        return {
+            "candidate_id": candidate_id,
+            "raw_skills": [],
+            "analysis": {},
+            "message": "Candidate has no extracted skills to analyze."
+        }
+        
+    initial_state = {
+        "raw_skills": candidate.skills,
+        "experience_entries": candidate.experience or [],
+        "years_experience": candidate.years_experience
+    }
+    
+    analysis_result = await normalization_graph.ainvoke(initial_state)
+
+    return {
+        "candidate_id": candidate_id,
+        "raw_skills": analysis_result.get("raw_skills", []),
+        "normalized_skills": analysis_result.get("normalized_skills", []),
+        "inferred_skills": analysis_result.get("inferred_skills", []),
+        "emerging_skills": analysis_result.get("emerging_skills", []),
+        "skill_profile": analysis_result.get("skill_profile", {})
+    }
+
+
+
 @router.put("/{candidate_id}", response_model=CandidateDetail)
 async def update_candidate(
     candidate_id: str,

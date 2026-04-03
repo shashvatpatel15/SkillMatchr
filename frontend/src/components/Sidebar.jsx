@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, LayoutDashboard, BrainCircuit, LogOut, BookOpen } from 'lucide-react';
+import { Users, LayoutDashboard, BrainCircuit, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
@@ -13,7 +13,6 @@ export default function Sidebar() {
   };
 
   const navItems = [
-    { name: 'Documentation', path: '/intro', icon: BookOpen },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Candidates', path: '/candidates', icon: Users },
   ];
@@ -22,7 +21,7 @@ export default function Sidebar() {
     <div className="w-64 bg-slate-900 h-screen flex flex-col border-r border-slate-800 text-slate-300">
       <div className="p-6 flex items-center gap-3">
         <BrainCircuit className="w-8 h-8 text-indigo-500" />
-        <span className="text-xl font-bold text-white tracking-tight">SkillMatchr</span>
+        <span className="text-xl font-bold text-white tracking-tight">HireOps</span>
       </div>
 
       <nav className="flex-1 px-4 space-y-2 mt-4">

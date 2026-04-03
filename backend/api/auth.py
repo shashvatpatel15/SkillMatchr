@@ -182,3 +182,79 @@ async def google_auth_legacy(body: GoogleAuthRequest, db: AsyncSession = Depends
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse.from_user(current_user)
+
+
+# ── Profile Update ───────────────────────────────────────────────
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_profile(
+    body: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update the current user's profile (full_name, email)."""
+    if "full_name" in body and body["full_name"]:
+        current_user.full_name = body["full_name"].strip()
+
+    if "email" in body and body["email"]:
+        new_email = body["email"].strip().lower()
+        if new_email != current_user.email:
+            existing = await db.execute(select(User).where(User.email == new_email))
+            if existing.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already in use by another account",
+                )
+            current_user.email = new_email
+
+    await db.commit()
+    await db.refresh(current_user)
+    return UserResponse.from_user(current_user)
+
+
+@router.patch("/me/password")
+async def change_password(
+    body: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change the current user's password. Requires current_password and new_password."""
+    current_password = body.get("current_password", "")
+    new_password = body.get("new_password", "")
+
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters",
+        )
+
+    # For native auth, verify current password
+    if current_user.auth_provider == "native":
+        if not current_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is required",
+            )
+        if not current_user.hashed_password or not verify_password(
+            current_password, current_user.hashed_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Current password is incorrect",
+            )
+
+    current_user.hashed_password = hash_password(new_password)
+    await db.commit()
+    return {"message": "Password updated successfully"}
+
+
+@router.delete("/me")
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete the current user's account."""
+    await db.delete(current_user)
+    await db.commit()
+    return {"message": "Account deleted successfully"}

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/login/callback"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:5173/login/callback"
     JWT_SECRET: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440

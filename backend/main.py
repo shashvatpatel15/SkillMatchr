@@ -46,12 +46,21 @@ app = FastAPI(
 
 import os
 
-# Get extra CORS origin from env (e.g. Vercel URL)
-extra_origin = os.environ.get("CORS_ORIGIN", "")
+# Support comma-separated CORS origins (e.g. "https://app.vercel.app,https://custom-domain.com")
+_raw_origins = os.environ.get("CORS_ORIGIN", "")
+_extra_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+_allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+] + _extra_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"] + ([extra_origin] if extra_origin else []),
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

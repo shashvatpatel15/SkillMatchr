@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Powered_By-Google_Gemini-blue" />
   <img src="https://img.shields.io/badge/Stack-FastAPI_%7C_React-black" />
   <br />
-  <h1>🎯 SkillMatchr</h1>
+  <h1>🎯 HireOps</h1>
   <p><strong>Multi-Agent AI System for Intelligent Resume Parsing, Skill-Set Matching, and API-Ready Talent Intelligence.</strong></p>
   <p><i>Developed for Prama Innovations India Pvt. Ltd. (Problem Statement 10)</i></p>
 </div>
@@ -11,7 +11,7 @@
 ---
 
 ## ⚡ Overview
-Recruitment teams process thousands of diverse resumes daily. Current ATS (Applicant Tracking Systems) rely on rigid keyword matching that misses qualified candidates and surfaces irrelevant ones. **SkillMatchr** solves this by leveraging a Multi-Agent AI architecture to ingest, normalize, and semantically match disparate candidate profiles against complex job descriptions in real time. 
+Recruitment teams process thousands of diverse resumes daily. Current ATS (Applicant Tracking Systems) rely on rigid keyword matching that misses qualified candidates and surfaces irrelevant ones. **HireOps** solves this by leveraging a Multi-Agent AI architecture to ingest, normalize, and semantically match disparate candidate profiles against complex job descriptions in real time. 
 
 Built strictly with enterprise-grade architectures, this platform exposes the entire AI pipeline through robust REST APIs, webhooks, and a lightning-fast React frontend for talent managers.
 
@@ -52,8 +52,8 @@ Built strictly with enterprise-grade architectures, this platform exposes the en
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/SkillMatchr.git
-cd SkillMatchr
+git clone https://github.com/YourUsername/HireOps.git
+cd HireOps
 ```
 
 ### 2. Environment Variables
@@ -100,7 +100,7 @@ npm run dev
 
 ## 📡 API Endpoints (V1 Third-Party Layer)
 
-SkillMatchr acts as an autonomous operating system capable of integration into any external client via Standard REST.
+HireOps acts as an autonomous operating system capable of integration into any external client via Standard REST.
 _(Full OpenAPI / Swagger specification is available dynamically at `http://localhost:8000/docs`)_
 
 | Endpoint | Method | Description |
