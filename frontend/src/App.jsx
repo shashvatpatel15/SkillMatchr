@@ -17,6 +17,7 @@ import ReferralsPage from './pages/ReferralsPage';
 import TaxonomyPage from './pages/TaxonomyPage';
 import SettingsPage from './pages/SettingsPage';
 import ApiDocsPage from './pages/ApiDocsPage';
+import GoogleCallback from './pages/GoogleCallback';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/login/callback" element={<GoogleCallback />} />
           <Route path="/dashboard" element={<ProtectedRoute><HRDashboard /></ProtectedRoute>} />
           <Route path="/candidates" element={<ProtectedRoute><CandidatesPage /></ProtectedRoute>} />
           <Route path="/ingest" element={<ProtectedRoute><IngestPage /></ProtectedRoute>} />
