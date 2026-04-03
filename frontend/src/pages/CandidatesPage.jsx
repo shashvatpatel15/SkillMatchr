@@ -717,6 +717,82 @@ export default function CandidatesPage() {
                                 </div>
                               </div>
                             )}
+
+                            {selectedCandidate.certifications?.length > 0 && (
+                              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                                  <FileText className="w-4 h-4" /> Certifications
+                                </h4>
+                                <div className="space-y-2">
+                                  {selectedCandidate.certifications.map((c, i) => (
+                                    <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-800">{c.name || 'Certification'}</p>
+                                        {c.issuer && <p className="text-xs text-slate-500 mt-0.5">{c.issuer}</p>}
+                                      </div>
+                                      {c.year && <span className="text-xs font-bold text-slate-400">{c.year}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedCandidate.projects?.length > 0 && (
+                              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                                  <Layers className="w-4 h-4" /> Projects
+                                </h4>
+                                <div className="space-y-4">
+                                  {selectedCandidate.projects.map((p, i) => (
+                                    <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                      <div className="flex justify-between items-start mb-2">
+                                        <p className="text-sm font-bold text-slate-800">{p.name || 'Project'}</p>
+                                        {p.url && (
+                                          <a href={p.url.startsWith('http') ? p.url : `https://${p.url}`} target="_blank" rel="noreferrer" className="text-indigo-500 hover:text-indigo-700">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                        )}
+                                      </div>
+                                      {p.description && <p className="text-xs text-slate-600 mb-2 leading-relaxed">{p.description}</p>}
+                                      {p.technologies?.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                          {p.technologies.map((t, idx) => (
+                                            <span key={idx} className="text-[10px] bg-white border border-slate-200 px-2.5 py-1 rounded-md text-slate-500 font-semibold">{t}</span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedCandidate.publications?.length > 0 && (
+                              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                                  <Bookmark className="w-4 h-4" /> Publications / Papers
+                                </h4>
+                                <div className="space-y-2">
+                                  {selectedCandidate.publications.map((pub, i) => (
+                                    <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                      <div className="flex justify-between items-start">
+                                        <p className="text-sm font-semibold text-slate-800">{pub.title || 'Publication'}</p>
+                                        {pub.url && (
+                                          <a href={pub.url.startsWith('http') ? pub.url : `https://${pub.url}`} target="_blank" rel="noreferrer" className="text-indigo-500 hover:text-indigo-700 ml-2 shrink-0">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                                        {pub.publisher_or_conference && <span>{pub.publisher_or_conference}</span>}
+                                        {pub.publisher_or_conference && pub.year && <span>•</span>}
+                                        {pub.year && <span>{pub.year}</span>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </>
                         )}
 

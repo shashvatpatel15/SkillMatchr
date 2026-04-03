@@ -18,6 +18,26 @@ class ExperienceEntry(BaseModel):
     description: str | None = None
 
 
+class ProjectEntry(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    technologies: list[str] = Field(default_factory=list)
+    url: str | None = None
+
+
+class CertificationEntry(BaseModel):
+    name: str | None = None
+    issuer: str | None = None
+    year: str | None = None
+
+
+class PublicationEntry(BaseModel):
+    title: str | None = None
+    publisher_or_conference: str | None = None
+    year: str | None = None
+    url: str | None = None
+
+
 class ParsedResume(BaseModel):
     """Schema for structured data extracted from a resume by Gemini."""
 
@@ -41,6 +61,9 @@ class ParsedResume(BaseModel):
     )
     education: list[EducationEntry] = Field(default_factory=list)
     experience: list[ExperienceEntry] = Field(default_factory=list)
+    certifications: list[CertificationEntry] = Field(default_factory=list)
+    projects: list[ProjectEntry] = Field(default_factory=list)
+    publications: list[PublicationEntry] = Field(default_factory=list)
     confidence_score: float = Field(
         default=0.0,
         description="Confidence in extraction quality from 0.0 to 1.0",

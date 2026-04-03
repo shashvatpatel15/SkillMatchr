@@ -23,6 +23,9 @@ class Candidate(Base, UUIDPrimaryKey, TimestampMixin):
     skills: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     education: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     experience: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    certifications: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    projects: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    publications: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
