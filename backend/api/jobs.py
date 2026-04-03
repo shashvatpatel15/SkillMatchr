@@ -69,7 +69,7 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ):
     """List all job openings."""
-    stmt = select(Job).order_by(Job.created_at.desc())
+    stmt = select(Job).where(Job.created_by == current_user.id).order_by(Job.created_at.desc())
     result = await db.execute(stmt)
     jobs = result.scalars().all()
     return [_job_to_response(j) for j in jobs]
@@ -82,7 +82,7 @@ async def get_job(
     db: AsyncSession = Depends(get_db),
 ):
     """Get a single job by ID."""
-    job = await db.get(Job, job_id)
+    job = (await db.execute(select(Job).where(Job.id == job_id).where(Job.created_by == current_user.id))).scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return _job_to_response(job)
@@ -96,7 +96,7 @@ async def match_candidates(
     db: AsyncSession = Depends(get_db),
 ):
     """Find best-matching candidates for a job using AI scoring."""
-    job = await db.get(Job, job_id)
+    job = (await db.execute(select(Job).where(Job.id == job_id).where(Job.created_by == current_user.id))).scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -138,7 +138,7 @@ async def compare_candidates_endpoint(
     db: AsyncSession = Depends(get_db),
 ):
     """Compare specific candidates against a job with detailed metrics."""
-    job = await db.get(Job, job_id)
+    job = (await db.execute(select(Job).where(Job.id == job_id).where(Job.created_by == current_user.id))).scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 

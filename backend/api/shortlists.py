@@ -42,7 +42,7 @@ async def list_shortlists(
 ):
     """List all shortlists."""
     result = await db.execute(
-        select(Shortlist).order_by(Shortlist.created_at.desc())
+        select(Shortlist).where(Shortlist.created_by == current_user.id).order_by(Shortlist.created_at.desc())
     )
     shortlists = result.scalars().all()
     return [await _shortlist_response(db, s) for s in shortlists]
@@ -80,7 +80,7 @@ async def get_shortlist(
 ):
     """Get shortlist with its candidates."""
     result = await db.execute(
-        select(Shortlist).where(Shortlist.id == shortlist_id)
+        select(Shortlist).where(Shortlist.id == shortlist_id).where(Shortlist.created_by == current_user.id)
     )
     shortlist = result.scalar_one_or_none()
     if not shortlist:
@@ -136,7 +136,7 @@ async def add_candidate_to_shortlist(
     """Add a candidate to a shortlist."""
     # Verify shortlist exists
     sl_result = await db.execute(
-        select(Shortlist).where(Shortlist.id == shortlist_id)
+        select(Shortlist).where(Shortlist.id == shortlist_id).where(Shortlist.created_by == current_user.id)
     )
     if not sl_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Shortlist not found")

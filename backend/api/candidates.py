@@ -30,7 +30,7 @@ async def list_candidates(
 ):
     """List all candidates with pagination and advanced filtering."""
     # Build query
-    query = select(Candidate)
+    query = select(Candidate).where(Candidate.created_by == current_user.id)
     
     components = []
     if q:
@@ -94,7 +94,9 @@ async def get_candidate(
 ):
     """Get full candidate details."""
     result = await db.execute(
-        select(Candidate).where(Candidate.id == candidate_id)
+        select(Candidate)
+        .where(Candidate.id == candidate_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:
@@ -159,7 +161,9 @@ async def get_candidate_analysis(
     from backend.services.skills.normalization_agent import normalization_graph
 
     result = await db.execute(
-        select(Candidate).where(Candidate.id == candidate_id)
+        select(Candidate)
+        .where(Candidate.id == candidate_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:
@@ -201,7 +205,9 @@ async def update_candidate(
 ):
     """Update specific fields on a candidate."""
     result = await db.execute(
-        select(Candidate).where(Candidate.id == candidate_id)
+        select(Candidate)
+        .where(Candidate.id == candidate_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:
@@ -246,7 +252,9 @@ async def delete_candidate(
 ):
     """Delete a candidate."""
     result = await db.execute(
-        select(Candidate).where(Candidate.id == candidate_id)
+        select(Candidate)
+        .where(Candidate.id == candidate_id)
+        .where(Candidate.created_by == current_user.id)
     )
     candidate = result.scalar_one_or_none()
     if not candidate:

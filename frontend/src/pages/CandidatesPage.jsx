@@ -616,7 +616,35 @@ export default function CandidatesPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         {selectedCandidate.confidence_score != null && <ScoreRing score={selectedCandidate.confidence_score} />}
-                        <button onClick={closeModal} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
+                        
+                        {/* Quick Actions inside Modal */}
+                        {shortlists.length > 0 && (
+                          <div className="relative group/shortlist hidden sm:block">
+                            <select
+                              onChange={(e) => { 
+                                if (e.target.value) {
+                                  addToShortlist(e.target.value, selectedCandidate.id);
+                                  e.target.value = '';
+                                }
+                              }}
+                              className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg font-semibold cursor-pointer outline-none hover:bg-indigo-100 transition-colors"
+                              defaultValue=""
+                            >
+                              <option value="" disabled>+ Shortlist</option>
+                              {shortlists.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        
+                        <button 
+                          onClick={() => deleteCandidate(selectedCandidate.id)} 
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 hidden sm:block"
+                          title="Delete Candidate"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        <button onClick={closeModal} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors ml-1">
                           <X className="w-5 h-5" />
                         </button>
                       </div>
