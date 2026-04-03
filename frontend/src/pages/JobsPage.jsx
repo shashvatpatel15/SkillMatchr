@@ -3,6 +3,14 @@ import { Briefcase, Plus, X, MapPin, DollarSign, Users, Zap, Trash2, Clock, Chec
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 
+const InputField = ({ label, name, type = 'text', placeholder, required = false, form, setForm }) => (
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+    <input type={type} required={required} value={form[name]} onChange={e => setForm({ ...form, [name]: e.target.value })}
+      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none bg-white text-sm" placeholder={placeholder} />
+  </div>
+);
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,13 +87,6 @@ export default function JobsPage() {
     } finally { setMatchLoading(false); }
   };
 
-  const InputField = ({ label, name, type = 'text', placeholder, required = false }) => (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-      <input type={type} required={required} value={form[name]} onChange={e => setForm({ ...form, [name]: e.target.value })}
-        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none bg-white text-sm" placeholder={placeholder} />
-    </div>
-  );
 
   const TYPE_LABELS = {
     full_time: 'Full Time',
@@ -132,18 +133,18 @@ export default function JobsPage() {
       {/* Create Job Modal */}
       <AnimatePresence>
         {showCreate && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreate(false)} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={e => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-900">Create New Job</h3>
-                <button onClick={() => setShowCreate(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"><X className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setShowCreate(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"><X className="w-5 h-5" /></button>
               </div>
               <form onSubmit={createJob} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <InputField label="Job Title" name="title" placeholder="Senior Frontend Developer" required />
-                  <InputField label="Company" name="company" placeholder="Acme Corp" />
-                  <InputField label="Department" name="department" placeholder="Engineering" />
-                  <InputField label="Location" name="location" placeholder="Bangalore, India" />
+                  <InputField label="Job Title" name="title" placeholder="Senior Frontend Developer" required form={form} setForm={setForm} />
+                  <InputField label="Company" name="company" placeholder="Acme Corp" form={form} setForm={setForm} />
+                  <InputField label="Department" name="department" placeholder="Engineering" form={form} setForm={setForm} />
+                  <InputField label="Location" name="location" placeholder="Bangalore, India" form={form} setForm={setForm} />
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
                     <select value={form.employment_type} onChange={e => setForm({ ...form, employment_type: e.target.value })}
@@ -154,11 +155,11 @@ export default function JobsPage() {
                       <option value="internship">Internship</option>
                     </select>
                   </div>
-                  <InputField label="Experience (years)" name="experience_required" type="number" placeholder="5" />
-                  <InputField label="Min Salary" name="salary_min" type="number" placeholder="80000" />
-                  <InputField label="Max Salary" name="salary_max" type="number" placeholder="120000" />
+                  <InputField label="Experience (years)" name="experience_required" type="number" placeholder="5" form={form} setForm={setForm} />
+                  <InputField label="Min Salary" name="salary_min" type="number" placeholder="80000" form={form} setForm={setForm} />
+                  <InputField label="Max Salary" name="salary_max" type="number" placeholder="120000" form={form} setForm={setForm} />
                 </div>
-                <InputField label="Required Skills (comma-separated)" name="skills_required" placeholder="React, TypeScript, Node.js" />
+                <InputField label="Required Skills (comma-separated)" name="skills_required" placeholder="React, TypeScript, Node.js" form={form} setForm={setForm} />
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Job Description</label>
                   <textarea value={form.job_description} onChange={e => setForm({ ...form, job_description: e.target.value })} rows={4}

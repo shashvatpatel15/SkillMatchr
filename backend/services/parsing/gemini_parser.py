@@ -99,22 +99,32 @@ _LINKEDIN_SYSTEM_PROMPT = (
 )
 
 
+from tenacity import retry, wait_exponential, stop_after_attempt
+
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+def _invoke_gemini(prompt: str) -> ParsedResume:
+    llm = _get_gemini_llm()
+    structured = llm.with_structured_output(ParsedResume)
+    return structured.invoke(prompt)
+
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+def _invoke_groq(prompt: str) -> ParsedResume:
+    llm = _get_groq_llm()
+    structured = llm.with_structured_output(ParsedResume)
+    return structured.invoke(prompt)
+
 def _parse_with_fallback(prompt: str) -> ParsedResume:
     """Try Gemini first, fall back to Groq on any error (rate limit, timeout, etc)."""
     # ── Attempt 1: Gemini ────────────────────────────────────────
     try:
-        llm = _get_gemini_llm()
-        structured = llm.with_structured_output(ParsedResume)
-        result = structured.invoke(prompt)
+        result = _invoke_gemini(prompt)
         logger.info("Parsed with Gemini OK: %s", result.full_name)
         return result
     except Exception as e:
         logger.warning("Gemini failed (%s), falling back to Groq", e)
 
     # ── Attempt 2: Groq (free, fast) ────────────────────────────
-    llm = _get_groq_llm()
-    structured = llm.with_structured_output(ParsedResume)
-    result = structured.invoke(prompt)
+    result = _invoke_groq(prompt)
     logger.info("Parsed with Groq OK: %s", result.full_name)
     return result
 
