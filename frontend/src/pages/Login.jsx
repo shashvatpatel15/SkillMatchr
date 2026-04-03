@@ -202,7 +202,7 @@ export default function Login() {
           <div className="border-l-2 border-indigo-500/40 pl-4 py-1">
             <p className="text-slate-300 italic text-sm">"From PDF to ranked talent pool in under 10 seconds."</p>
             <p className="text-slate-500 text-[11px] uppercase tracking-wider font-medium mt-1.5">
-              Multi-Agent AI • Prama Innovations
+              Multi-Agent AI • By Team SteroidPrompts
             </p>
           </div>
         </div>
