@@ -135,11 +135,11 @@ export default function JobsPage() {
         {showCreate && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreate(false)} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={e => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-white z-10">
+              <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-white shrink-0 z-10">
                 <h3 className="text-xl font-bold text-slate-900">Create New Job</h3>
                 <button type="button" onClick={() => setShowCreate(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"><X className="w-5 h-5" /></button>
               </div>
-              <div className="flex-1 overflow-y-auto p-8 space-y-4">
+              <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <InputField label="Job Title" name="title" placeholder="Senior Frontend Developer" required form={form} setForm={setForm} />
                   <InputField label="Company" name="company" placeholder="Acme Corp" form={form} setForm={setForm} />
@@ -166,7 +166,7 @@ export default function JobsPage() {
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none bg-white text-sm resize-none" placeholder="Describe the role..." />
                 </div>
               </div>
-              <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 z-10">
+              <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0 z-10">
                  <button type="button" onClick={() => setShowCreate(false)} className="px-5 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold transition text-sm">Cancel</button>
                  <button onClick={createJob} type="button" disabled={creating} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition text-sm disabled:opacity-60">
                   {creating ? 'Creating...' : 'Create Job'}

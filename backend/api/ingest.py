@@ -124,7 +124,7 @@ async def _process_single_file(
             )
 
         async with BATCH_SEMAPHORE:
-            await asyncio.sleep(2) # throttle API pressure further
+            await asyncio.sleep(4) # throttle API pressure further
             result = await ingestion_graph.ainvoke({
                 "file_bytes": file_bytes,
                 "filename": filename,
