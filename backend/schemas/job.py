@@ -39,6 +39,7 @@ class JobResponse(BaseModel):
 
 class MatchRequest(BaseModel):
     top_k: int = Field(default=20, ge=1, le=500)
+    threshold: float = Field(default=0.20, ge=0.0, le=1.0, description="Configurable matching threshold")
 
 
 class MatchScoreBreakdown(BaseModel):
@@ -56,6 +57,8 @@ class MatchResultItem(BaseModel):
     current_title: str | None
     years_experience: float | None
     skills: list[str] | None
+    missing_skills: list[str] = Field(default_factory=list)
+    upskill_suggestions: list[str] = Field(default_factory=list)
     composite_score: float
     breakdown: MatchScoreBreakdown
 

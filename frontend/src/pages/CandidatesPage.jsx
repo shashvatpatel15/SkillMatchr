@@ -701,6 +701,15 @@ export default function CandidatesPage() {
                         {/* Overview Tab */}
                         {activeTab === 'overview' && (
                           <>
+                            {(!selectedCandidate.summary && (!selectedCandidate.education || selectedCandidate.education.length === 0) && (!selectedCandidate.skills || selectedCandidate.skills.length === 0) && (!selectedCandidate.certifications || selectedCandidate.certifications.length === 0) && (!selectedCandidate.projects || selectedCandidate.projects.length === 0) && (!selectedCandidate.publications || selectedCandidate.publications.length === 0)) && (
+                              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl shadow-sm border border-slate-200">
+                                <FileText className="w-12 h-12 text-slate-300 mb-3" />
+                                <h4 className="text-lg font-bold text-slate-700">No Profile Data Extracted</h4>
+                                <p className="text-slate-500 text-sm mt-1 max-w-sm mx-auto">
+                                  We could not extract any structured information. The original document might be unreadable, password-protected, or image-based.
+                                </p>
+                              </div>
+                            )}
                             {selectedCandidate.summary && (
                               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                                 <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Executive Summary</h4>

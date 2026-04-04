@@ -70,6 +70,28 @@ def _compute_skill_match(candidate_skills: list | dict | None, job_skills: list 
     return matched / len(job_skills)
 
 
+def _compute_skill_gap(candidate_skills: list | dict | None, job_skills: list | None) -> list[str]:
+    """Gap analysis: returns required skills missing from the candidate's profile."""
+    if not job_skills:
+        return []
+    if not candidate_skills:
+        return list(job_skills)
+
+    if isinstance(candidate_skills, dict):
+        cand_set = {s.lower() for s in candidate_skills.get("skills", candidate_skills.keys())}
+    elif isinstance(candidate_skills, list):
+        cand_set = {s.lower() for s in candidate_skills if isinstance(s, str)}
+    else:
+        cand_set = set()
+
+    missing = []
+    for skill in job_skills:
+        skill_lower = skill.lower()
+        if not any(skill_lower in cs or cs in skill_lower for cs in cand_set):
+            missing.append(skill)
+    return missing
+
+
 def _compute_skill_match_from_text(
     raw_text: str | None, summary: str | None, job_skills: list | None
 ) -> float:
@@ -118,6 +140,7 @@ async def match_candidates_to_job(
     session: AsyncSession,
     job: Job,
     top_k: int = 20,
+    threshold: float = 0.20,
     user_id: str | None = None,
 ) -> list[dict]:
     """Find and rank the best candidates for a job opening.
@@ -181,7 +204,8 @@ async def match_candidates_to_job(
                     0.50 * semantic + 0.25 * skill + 0.15 * experience + 0.10 * title
                 )
 
-                scored.append(_build_result(candidate, composite, semantic, skill, experience, title))
+                missing_skills = _compute_skill_gap(candidate.skills, job_skills)
+                scored.append(_build_result(candidate, composite, semantic, skill, experience, title, missing_skills))
         except Exception as e:
             logger.warning("Semantic pass failed: %s", e)
 
@@ -220,12 +244,12 @@ async def match_candidates_to_job(
         else:
             composite = 0.50 * semantic + 0.25 * skill + 0.15 * experience + 0.10 * title
 
-        scored.append(_build_result(candidate, composite, semantic, skill, experience, title))
+        missing_skills = _compute_skill_gap(candidate.skills, job_skills)
+        scored.append(_build_result(candidate, composite, semantic, skill, experience, title, missing_skills))
 
-    # Sort by composite descending, filter out irrelevant candidates, return top_k
+    # Sort by composite descending, filter dynamically by configurable threshold
     scored.sort(key=lambda x: x["composite_score"], reverse=True)
-    MIN_RELEVANCE = 0.20  # Below 20% = clearly not a fit
-    filtered = [s for s in scored if s["composite_score"] >= MIN_RELEVANCE]
+    filtered = [s for s in scored if s["composite_score"] >= threshold]
     return filtered[:top_k]
 
 
@@ -293,7 +317,13 @@ async def compare_candidates_for_job(
     return compared
 
 
-def _build_result(candidate, composite, semantic, skill, experience, title) -> dict:
+def _build_result(candidate, composite, semantic, skill, experience, title, missing_skills=None) -> dict:
+    if missing_skills is None:
+        missing_skills = []
+    
+    # Gap analysis & upskilling suggestions
+    suggestions = [f"Recommended upskilling: {s}" for s in missing_skills[:3]]
+
     return {
         "candidate_id": str(candidate.id),
         "full_name": candidate.full_name,
@@ -302,6 +332,8 @@ def _build_result(candidate, composite, semantic, skill, experience, title) -> d
         "current_title": candidate.current_title,
         "years_experience": candidate.years_experience,
         "skills": candidate.skills if isinstance(candidate.skills, list) else [],
+        "missing_skills": missing_skills,
+        "upskill_suggestions": suggestions,
         "composite_score": round(composite, 4),
         "breakdown": {
             "semantic_similarity": round(semantic, 4),

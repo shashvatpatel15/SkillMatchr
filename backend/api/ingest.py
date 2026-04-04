@@ -16,7 +16,7 @@ ALLOWED_TYPES = {
 }
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-BATCH_SEMAPHORE = asyncio.Semaphore(1)
+BATCH_SEMAPHORE = asyncio.Semaphore(5)
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_resume(
@@ -124,7 +124,6 @@ async def _process_single_file(
             )
 
         async with BATCH_SEMAPHORE:
-            await asyncio.sleep(4) # throttle API pressure further
             result = await ingestion_graph.ainvoke({
                 "file_bytes": file_bytes,
                 "filename": filename,

@@ -100,7 +100,7 @@ async def match_candidates(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    results = await match_candidates_to_job(db, job, top_k=body.top_k, user_id=str(current_user.id))
+    results = await match_candidates_to_job(db, job, top_k=body.top_k, threshold=body.threshold, user_id=str(current_user.id))
 
     await ws_manager.broadcast({
         "type": "JOB_MATCH_COMPLETED",
@@ -122,6 +122,8 @@ async def match_candidates(
                 current_title=r["current_title"],
                 years_experience=r["years_experience"],
                 skills=r["skills"],
+                missing_skills=r.get("missing_skills", []),
+                upskill_suggestions=r.get("upskill_suggestions", []),
                 composite_score=r["composite_score"],
                 breakdown=MatchScoreBreakdown(**r["breakdown"]),
             )
