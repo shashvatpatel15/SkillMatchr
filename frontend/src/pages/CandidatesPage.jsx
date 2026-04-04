@@ -479,7 +479,7 @@ export default function CandidatesPage() {
                             {initials(c.full_name)}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-slate-900 truncate">{c.full_name || '—'}</p>
+                            <p className="font-semibold text-slate-900 truncate">{c.full_name === 'Unknown' ? 'Unidentified Profile' : (c.full_name || '—')}</p>
                             <p className="text-xs text-slate-500 truncate">{c.current_title || 'No title'}</p>
                           </div>
                         </div>
@@ -544,7 +544,7 @@ export default function CandidatesPage() {
                         {initials(c.full_name)}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-slate-900 truncate text-sm">{c.full_name}</p>
+                        <p className="font-bold text-slate-900 truncate text-sm">{c.full_name === 'Unknown' ? 'Unidentified Profile' : c.full_name}</p>
                         <p className="text-xs text-slate-500 truncate">{c.current_title || 'No title'}</p>
                       </div>
                     </div>
@@ -634,7 +634,7 @@ export default function CandidatesPage() {
                           {initials(selectedCandidate.full_name)}
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-slate-900 leading-tight">{selectedCandidate.full_name}</h3>
+                          <h3 className="text-xl font-bold text-slate-900 leading-tight">{selectedCandidate.full_name === 'Unknown' ? 'Unidentified Profile' : selectedCandidate.full_name}</h3>
                           <p className="text-indigo-600 font-semibold text-sm mt-0.5">{selectedCandidate.current_title || 'No Title'}</p>
                           <div className="flex flex-wrap items-center gap-3 mt-1.5">
                             {selectedCandidate.location && <span className="flex items-center gap-1 text-xs text-slate-500"><MapPin className="w-3 h-3" /> {selectedCandidate.location}</span>}
@@ -976,7 +976,7 @@ export default function CandidatesPage() {
                               </a>
                             )}
                             {selectedCandidate.linkedin_url && (
-                              <a href={selectedCandidate.linkedin_url} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-sm font-bold rounded-xl transition-colors">
+                              <a href={selectedCandidate.linkedin_url.startsWith('http') ? selectedCandidate.linkedin_url : `https://${selectedCandidate.linkedin_url}`} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-sm font-bold rounded-xl transition-colors">
                                 <ExternalLink className="w-4 h-4" /> LinkedIn
                               </a>
                             )}
