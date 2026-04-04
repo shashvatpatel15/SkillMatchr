@@ -55,9 +55,15 @@ async def upload_resume(
     
     # Use filename as fallback if parsing completely failed
     fallback_name = (file.filename or "Unknown").replace(".pdf", "").replace(".docx", "").replace(".txt", "").replace("_", " ").title()
-    parsed = ParsedResume(**parsed_data) if parsed_data else ParsedResume(
-        full_name=fallback_name, summary="Parsing failed — flagged for manual review"
-    )
+    
+    if parsed_data:
+        if not parsed_data.get("full_name") or parsed_data.get("full_name") == "Unknown":
+            parsed_data["full_name"] = fallback_name
+        parsed = ParsedResume(**parsed_data)
+    else:
+        parsed = ParsedResume(
+            full_name=fallback_name, summary="Parsing failed — flagged for manual review"
+        )
 
     return UploadResponse(
         candidate_id=result["candidate_id"],

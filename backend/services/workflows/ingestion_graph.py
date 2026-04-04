@@ -152,10 +152,15 @@ async def save_to_db_node(state: IngestionState) -> dict:
                     score_reason=score_reason,
                 )
                 await session.commit()
+                
+                resolved_name = parsed.get("full_name")
+                if not resolved_name or resolved_name == "Unknown":
+                    resolved_name = (state.get("filename") or "Unknown").replace(".pdf", "").replace(".docx", "").replace(".txt", "").replace("_", " ").title()
+                    
                 await ws_manager.broadcast({
                     "type": "INGESTION_COMPLETE",
                     "candidate_id": merge_result["candidate_id"],
-                    "candidate_name": parsed.get("full_name", "Unknown"),
+                    "candidate_name": resolved_name,
                     "status": "auto_merged",
                     "source": state.get("source", "resume_upload"),
                 })
@@ -166,8 +171,13 @@ async def save_to_db_node(state: IngestionState) -> dict:
 
         # ── NEW CANDIDATE or MANUAL REVIEW — insert new row ──
         fallback_name = (state.get("filename") or "Unknown").replace(".pdf", "").replace(".docx", "").replace(".txt", "").replace("_", " ").title()
+        
+        resolved_name = parsed.get("full_name")
+        if not resolved_name or resolved_name == "Unknown":
+            resolved_name = fallback_name
+            
         candidate = Candidate(
-            full_name=parsed.get("full_name") or fallback_name,
+            full_name=resolved_name,
             email=parsed.get("email"),
             phone=parsed.get("phone"),
             linkedin_url=parsed.get("linkedin_url"),
@@ -216,7 +226,7 @@ async def save_to_db_node(state: IngestionState) -> dict:
         await ws_manager.broadcast({
             "type": "INGESTION_COMPLETE",
             "candidate_id": str(candidate.id),
-            "candidate_name": parsed.get("full_name", "Unknown"),
+            "candidate_name": resolved_name,
             "status": status,
             "source": state.get("source", "resume_upload"),
         })
