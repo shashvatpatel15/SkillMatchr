@@ -101,13 +101,13 @@ _LINKEDIN_SYSTEM_PROMPT = (
 
 from tenacity import retry, wait_exponential, stop_after_attempt
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+@retry(wait=wait_exponential(multiplier=1.5, min=2, max=30), stop=stop_after_attempt(5))
 def _invoke_gemini(prompt: str) -> ParsedResume:
     llm = _get_gemini_llm()
     structured = llm.with_structured_output(ParsedResume)
     return structured.invoke(prompt)
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+@retry(wait=wait_exponential(multiplier=1.5, min=2, max=30), stop=stop_after_attempt(5))
 def _invoke_groq(prompt: str) -> ParsedResume:
     llm = _get_groq_llm()
     structured = llm.with_structured_output(ParsedResume)

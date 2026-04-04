@@ -16,7 +16,7 @@ ALLOWED_TYPES = {
 }
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-BATCH_SEMAPHORE = asyncio.Semaphore(2)
+BATCH_SEMAPHORE = asyncio.Semaphore(1)
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_resume(
@@ -52,8 +52,11 @@ async def upload_resume(
     result = await ingestion_graph.ainvoke(initial_state)
 
     parsed_data = result.get("parsed_data", {})
+    
+    # Use filename as fallback if parsing completely failed
+    fallback_name = (file.filename or "Unknown").replace(".pdf", "").replace(".docx", "").replace(".txt", "").replace("_", " ").title()
     parsed = ParsedResume(**parsed_data) if parsed_data else ParsedResume(
-        full_name="Unknown", summary="Parsing failed — flagged for manual review"
+        full_name=fallback_name, summary="Parsing failed — flagged for manual review"
     )
 
     return UploadResponse(
@@ -115,7 +118,7 @@ async def _process_single_file(
             )
 
         async with BATCH_SEMAPHORE:
-            await asyncio.sleep(1) # throttle API pressure further
+            await asyncio.sleep(2) # throttle API pressure further
             result = await ingestion_graph.ainvoke({
                 "file_bytes": file_bytes,
                 "filename": filename,

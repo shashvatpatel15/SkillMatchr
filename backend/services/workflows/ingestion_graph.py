@@ -165,8 +165,9 @@ async def save_to_db_node(state: IngestionState) -> dict:
                 }
 
         # ── NEW CANDIDATE or MANUAL REVIEW — insert new row ──
+        fallback_name = (state.get("filename") or "Unknown").replace(".pdf", "").replace(".docx", "").replace(".txt", "").replace("_", " ").title()
         candidate = Candidate(
-            full_name=parsed.get("full_name", "Unknown"),
+            full_name=parsed.get("full_name") or fallback_name,
             email=parsed.get("email"),
             phone=parsed.get("phone"),
             linkedin_url=parsed.get("linkedin_url"),
