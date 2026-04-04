@@ -41,7 +41,7 @@ class PublicationEntry(BaseModel):
 class ParsedResume(BaseModel):
     """Schema for structured data extracted from a resume by Gemini."""
 
-    full_name: str = Field(default="Unknown", description="Candidate's full name")
+    full_name: str | None = Field(default=None, description="Candidate's full name")
     email: str | None = Field(default=None, description="Email address")
     phone: str | None = Field(default=None, description="Phone number")
     location: str | None = Field(default=None, description="City, State or Country")
