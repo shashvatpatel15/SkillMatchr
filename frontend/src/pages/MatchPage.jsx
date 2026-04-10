@@ -74,6 +74,8 @@ function GapCard({ gap }) {
 export default function MatchPage() {
   const [candidates, setCandidates] = useState([]);
   const [candidateId, setCandidateId] = useState('');
+  const [candQuery, setCandQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [jobTitle, setJobTitle] = useState('');
   const [jobDesc, setJobDesc] = useState('');
   const [requiredSkills, setRequiredSkills] = useState('');
@@ -146,18 +148,58 @@ export default function MatchPage() {
               </div>
             )}
 
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Candidate</label>
-              <select
-                value={candidateId}
-                onChange={e => setCandidateId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white"
+              <div 
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white flex items-center justify-between cursor-pointer"
+                onClick={() => setShowDropdown(!showDropdown)}
               >
-                <option value="">Select candidate…</option>
-                {candidates.map(c => (
-                  <option key={c.id} value={c.id}>{c.full_name} — {c.current_title || 'No title'}</option>
-                ))}
-              </select>
+                <div className="flex-1 truncate">
+                  {candidateId 
+                    ? (() => {
+                        const c = candidates.find(x => x.id === candidateId);
+                        return c ? (
+                          <span className="font-semibold text-indigo-700">
+                            {c.full_name} <span className="text-slate-400 font-normal text-xs ml-1">(#{c.id.split('-')[0]})</span>
+                          </span>
+                        ) : 'Select candidate…';
+                      })()
+                    : <span className="text-slate-400">Search by Name or Unique ID...</span>}
+                </div>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+              </div>
+              
+              {showDropdown && (
+                <div className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                  <div className="p-2 border-b border-slate-100 flex items-center gap-2">
+                    <Search className="w-4 h-4 text-slate-400" />
+                    <input 
+                      autoFocus
+                      placeholder="Type name or ID to filter..." 
+                      className="w-full text-sm outline-none bg-transparent"
+                      value={candQuery}
+                      onChange={e => setCandQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto p-1">
+                    {candidates
+                      .filter(c => (c.full_name || '').toLowerCase().includes(candQuery.toLowerCase()) || c.id.toLowerCase().includes(candQuery.toLowerCase()))
+                      .map(c => (
+                      <div 
+                        key={c.id} 
+                        onClick={() => { setCandidateId(c.id); setShowDropdown(false); setCandQuery(''); }}
+                        className="px-3 py-2 hover:bg-indigo-50 rounded-lg cursor-pointer flex flex-col"
+                      >
+                        <span className="font-semibold text-slate-800 text-sm">{c.full_name}</span>
+                        <span className="text-xs text-slate-500 font-mono">ID: {c.id}</span>
+                      </div>
+                    ))}
+                    {candidates.filter(c => (c.full_name || '').toLowerCase().includes(candQuery.toLowerCase()) || c.id.toLowerCase().includes(candQuery.toLowerCase())).length === 0 && (
+                      <div className="px-3 py-4 text-center text-sm text-slate-500">No candidates match your search.</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
