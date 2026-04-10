@@ -476,6 +476,10 @@ export default function CandidatesPage() {
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors text-[15px]">{c.full_name === 'Unknown' ? 'Candidate Missing Name' : c.full_name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5" onClick={e => e.stopPropagation()}>
+                              <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">ID: {String(c.id).split('-')[0]}</span>
+                              <button onClick={() => { navigator.clipboard.writeText(c.id); }} className="text-slate-300 hover:text-indigo-500 transition-colors" title="Copy full ID"><Copy className="w-3 h-3" /></button>
+                            </div>
                             <p className="text-[13px] text-slate-500 font-medium truncate max-w-sm mt-0.5">{c.current_title || 'Title not extracted'}</p>
                             {c.location && <div className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold mt-1"><MapPin className="w-3 h-3" /> {c.location}</div>}
                           </div>
@@ -550,6 +554,10 @@ export default function CandidatesPage() {
                     </div>
                     <div className="text-center mb-4">
                       <p className="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors text-[15px] truncate">{c.full_name === 'Unknown' ? 'Unknown' : c.full_name}</p>
+                      <div className="flex items-center justify-center gap-1.5 mt-1" onClick={e => e.stopPropagation()}>
+                        <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">#{String(c.id).split('-')[0]}</span>
+                        <button onClick={() => navigator.clipboard.writeText(c.id)} className="text-slate-300 hover:text-indigo-500 transition-colors" title="Copy full ID"><Copy className="w-3 h-3" /></button>
+                      </div>
                       <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{c.current_title || 'No Title'}</p>
                     </div>
 
@@ -623,6 +631,10 @@ export default function CandidatesPage() {
                             {selectedCandidate.full_name === 'Unknown' ? 'Unidentified Profile' : selectedCandidate.full_name}
                           </h2>
                           <p className="text-indigo-600 font-bold text-base mt-0.5">{selectedCandidate.current_title || 'No Extractable Title'}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">ID: {selectedCandidate.id}</span>
+                            <button onClick={() => { navigator.clipboard.writeText(selectedCandidate.id); }} className="text-slate-400 hover:text-indigo-600 transition-colors p-1 hover:bg-indigo-50 rounded-lg" title="Copy Unique ID"><Copy className="w-4 h-4" /></button>
+                          </div>
                           <div className="flex flex-wrap items-center gap-3 mt-3">
                             <StatusBadge status={selectedCandidate.ingestion_status} />
                             {selectedCandidate.location && <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full"><MapPin className="w-3.5 h-3.5" /> {selectedCandidate.location}</span>}
