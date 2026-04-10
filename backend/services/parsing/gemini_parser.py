@@ -99,44 +99,53 @@ _LINKEDIN_SYSTEM_PROMPT = (
 )
 
 
+import json
+import re
+
 async def _invoke_with_structured_output(llm, prompt: str) -> ParsedResume:
-    """Invoke an LLM with structured output, with a plain-text fallback."""
+    """Invoke an LLM with structured output, with a robust plain-text fallback JSON repair."""
+    # First, try the native LangChain structured output tool integration
     try:
         structured = llm.with_structured_output(ParsedResume)
         result = await structured.ainvoke(prompt)
         if result is not None:
             return result
     except Exception as e:
-        logger.warning("Structured output failed (%s), trying plain text fallback", e)
+        logger.warning("Native structured output failed (%s), attempting raw JSON extraction fallback", e)
 
-    # Fallback: ask for JSON and parse manually
-    import json
+    # Fallback: Force JSON schema generation via prompt and aggressively extract it
     json_prompt = (
-        prompt + "\n\nRespond ONLY with a valid JSON object matching this schema. "
-        "Do NOT include markdown formatting or code fences:\n"
+        prompt + "\n\nCRITICAL: Respond ONLY with a valid JSON object matching this schema. "
+        "Do NOT include markdown formatting, conversational filler, or code fences:\n"
         "{"
-        '"full_name": str|null, "email": str|null, "phone": str|null, '
-        '"location": str|null, "linkedin_url": str|null, "current_title": str|null, '
-        '"years_experience": float|null, "summary": str|null, '
-        '"skills": [str], "education": [{"degree": str|null, "institution": str|null, "year": str|null, "field_of_study": str|null}], '
-        '"experience": [{"title": str|null, "company": str|null, "duration": str|null, "description": str|null}], '
-        '"certifications": [{"name": str|null, "issuer": str|null, "year": str|null}], '
-        '"projects": [{"name": str|null, "description": str|null, "technologies": [str], "url": str|null}], '
-        '"publications": [{"title": str|null, "publisher_or_conference": str|null, "year": str|null, "url": str|null}], '
-        '"confidence_score": float'
+        '"full_name": "string|null", "email": "string|null", "phone": "string|null", '
+        '"location": "string|null", "linkedin_url": "string|null", "current_title": "string|null", '
+        '"years_experience": 1.5, "summary": "string|null", '
+        '"skills": ["string"], "education": [{"degree": "string|null", "institution": "string|null", "year": "string|null", "field_of_study": "string|null"}], '
+        '"experience": [{"title": "string|null", "company": "string|null", "duration": "string|null", "description": "string|null"}], '
+        '"certifications": [{"name": "string|null", "issuer": "string|null", "year": "string|null"}], '
+        '"projects": [{"name": "string|null", "description": "string|null", "technologies": ["string"], "url": "string|null"}], '
+        '"publications": [{"title": "string|null", "publisher_or_conference": "string|null", "year": "string|null", "url": "string|null"}], '
+        '"confidence_score": 0.9'
         "}"
     )
+    
     response = await llm.ainvoke(json_prompt)
     raw = response.content if hasattr(response, 'content') else str(response)
-    # Strip markdown code fences if present
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
-        if raw.endswith("```"):
-            raw = raw[:-3]
-        raw = raw.strip()
-    data = json.loads(raw)
-    return ParsedResume(**data)
+    
+    # Aggressive JSON Extraction
+    start_idx = raw.find('{')
+    end_idx = raw.rfind('}')
+    
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        raw = raw[start_idx:end_idx+1]
+    
+    try:
+        data = json.loads(raw)
+        return ParsedResume(**data)
+    except json.JSONDecodeError as decode_err:
+        logger.error("Fatal JSON parse failure after raw cleanup: %s. Source: %s", decode_err, raw)
+        raise ValueError(f"LLM failed to output parseable JSON structure: {decode_err}")
 
 
 async def _parse_with_fallback_async(prompt: str) -> ParsedResume:
