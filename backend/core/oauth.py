@@ -1,7 +1,7 @@
-"""Google OAuth2 authorization code flow with Gmail scope.
+"""Google OAuth2 authorization code flow.
 
 Handles:
-  1. Generating the Google consent URL (with gmail.readonly scope)
+  1. Generating the Google consent URL (profile + email scope)
   2. Exchanging the authorization code for access + refresh tokens
   3. Fetching user profile info from Google
 """
@@ -20,17 +20,16 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
-# Scopes: profile/email for login, gmail.readonly for inbox sync
+# Scopes: profile/email for authentication
 SCOPES = [
     "openid",
     "email",
     "profile",
-    "https://www.googleapis.com/auth/gmail.readonly",
 ]
 
 
 def get_google_auth_url() -> str:
-    """Build the Google OAuth consent URL with gmail.readonly scope."""
+    """Build the Google OAuth consent URL."""
     settings = get_settings()
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,

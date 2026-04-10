@@ -341,7 +341,7 @@ DUPLICATE_A2 = {
     "source": "bamboohr",
 }
 
-SOURCES = ["resume_upload", "linkedin", "bamboohr", "gmail"]
+SOURCES = ["resume_upload", "linkedin"]
 ACTIONS = [
     ("created_shortlist", "shortlist"),
     ("added_to_shortlist", "shortlist"),
@@ -429,7 +429,7 @@ async def seed():
             status="pending",
         )
         session.add(dq1)
-        print("Created dedup pair 1: Sarah Chen (resume) vs Sarah Chen (gmail)")
+        print("Created dedup pair 1: Sarah Chen (resume) vs Sarah Chen (linkedin)")
 
         # ── Duplicate pair 2 ──────────────────────────────────
         dup2 = Candidate(
@@ -459,7 +459,7 @@ async def seed():
             status="pending",
         )
         session.add(dq2)
-        print("Created dedup pair 2: James Rodriguez (linkedin) vs James A. Rodriguez (bamboohr)")
+        print("Created dedup pair 2: James Rodriguez (linkedin) vs James A. Rodriguez (resume_upload)")
 
         # ── Shortlists ────────────────────────────────────────
         sl1 = Shortlist(name="Frontend Candidates", description="Top frontend engineers for the UI team", created_by=user_id)
