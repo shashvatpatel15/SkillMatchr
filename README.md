@@ -1,107 +1,109 @@
-<div align="center">
-<h1>🎯 SkillMatchr</h1>
-  <p><strong>Multi-Agent AI System for Intelligent Resume Parsing, Skill-Set Matching, and API-Ready Talent Intelligence.</strong></p>
-  <p><i>Developed by Team SteriodPrompts</i></p>
-</div>
+<h1 align="center">SkillMatchr ✨</h1>
+<p align="center">
+  <strong>Multi-Agent AI & Talent Intelligence Platform</strong><br>
+  <em>Intelligent Resume Parsing, Semantic Job Matching, and Taxonomy Normalization</em>
+</p>
+
+## 🚀 Overview
+**SkillMatchr** is an enterprise-grade Applicant Tracking System (ATS) built for the modern recruiter. Processing thousands of resumes can result in lost talent due to rigid keyword matching. SkillMatchr solves this using a **Multi-Agent AI Pipeline** that extracts, normalizes, and semantically maps candidates' skills against dynamic job descriptions.
+
+Instead of matching "React" and "ReactJS" loosely, SkillMatchr understands deep technical taxonomies, uncovers inferred skills, and calculates robust composite matching scores (Semantic + Experience + Skills + Titles) utilizing embedding graphs and LLM orchestrations.
 
 ---
 
-## ⚡ Overview
-Recruitment teams process thousands of diverse resumes daily. Current ATS (Applicant Tracking Systems) rely on rigid keyword matching that misses qualified candidates and surfaces irrelevant ones. **SkillMatchr** solves this by leveraging a Multi-Agent AI architecture to ingest, normalize, and semantically match disparate candidate profiles against complex job descriptions in real time. 
-
-Built strictly with enterprise-grade architectures, this platform exposes the entire AI pipeline through robust REST APIs, WebSockets for immediate frontend syncing, and a lightning-fast React frontend for talent managers.
-
----
-
-## 🔥 Key Hackathon Features
-
-### 1. Multi-Agent Agentic Parsing & Intelligence Pipeline 
-* **Universal Ingestion Agent:** Accurately extracts complex layouts across **PDFs**, **DOCX**, and **TXT** files directly into structured JSON schemas utilizing `gemini-2.5-flash` natively bound to Pydantic outputs.
-* **Deep Feature Extraction:** Robust processing pulls granular metadata beyond basic contact info, including verifiable **Certifications**, **Projects**, and academic **Publications**.
-* **Skill Taxonomy Agent:** Normalizes unstandardized keywords (e.g., `React.js` -> `ReactJS`), recognizes hierarchical skill patterns (e.g. `PyTorch` implies `Deep Learning`), and categorizes emerging skills dynamically.
-* **Semantic Engine:** Leverages vector similarity (`pgvector`) & Gemini Embeddings to detect deep candidate suitability (Cosine Similarity NDCG) rather than surface-layer Boolean matching.
-
-### 2. High-Performance Live Dashboard
-* **Realtime Syncing:** Employs JWT-authenticated WebSockets to sync data extraction to the Dashboard without user-polling.
-* **Dynamic Applicant Indexing:** Server-side push-down filtering leveraging newly engineered multi-column `PostgreSQL` indexing allowing recruiters to instantly query tens of thousands of applicants.
-* **Clean Multi-Tenancy Isolations:** Strict Row-Level query validations guarantee complete isolation across respective tenant HR workspaces.
-* **Interactive UI:** Glassmorphism UI built in React and Tailwind displaying gorgeous "Quick Overview" modules linking dynamically to live project URLs and candidate analyses.
-
-### 3. Production-Ready Deployment
-* **Scale-Ready Metrics:** Verified >90% Field Extraction Precision, 10-second end-to-end ingestion latency bounds, and 100% LLM pipeline structural durability.
-* **V1 REST API:** Fully OpenAPI / Swagger-documented endpoints.
+## 🌟 Key Features
+- **Intelligent Ingestion Pipeline:** Multi-agent pipeline to extract unstructured info from PDFs, DOCX, and text.
+- **Skill Taxonomy Engine:** Maps messy resume keywords to Canonical Skills. Uncovers "Inferred" and "Emerging" skills contextually using AI.
+- **Semantic Vector Matching:** Leverages **ChromaDB** for rapid cosine similarity semantic queries.
+- **Real-Time Observability:** Tracks multi-agent latency, success rate, execution time, and F1-score accuracy in a real-time dashboard.
+- **Enterprise UI/UX:** Ultra-premium glassmorphic interfaces with real-time websocket updates on candidate processing statuses.
+- **V1 External APIs:** Full developer suite for embedding ATS integrations natively with API Keys and webhooks.
 
 ---
 
-## 🚀 Tech Stack
+## 🛠️ Technology Stack
+### Backend
+* **Framework:** Python 3.11 / FastAPI (Async native)
+* **AI & Orchestration:** Gemini 2.0 Flash / LangGraph / LangChain
+* **Vector Database:** ChromaDB (Local SQLite-backed persistent vectors)
+* **Relational Database:** PostgreSQL (Supabase/Local) / SQLAlchemy / Alembic
+* **Concurrency:** WebSockets, Asyncio, Background Tasks
 
-| Domain | Technology |
-|---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS, Framer Motion, WebSockets |
-| **Backend API** | Python 3.11+, FastAPI, Uvicorn, LangGraph (`ainvoke`) |
-| **LLM & Embeddings** | Google Gemini `gemini-2.5-flash`, `gemini-embedding-001` |
-| **Database** | PostgreSQL with `pgvector` & dynamic Alembic Migrations |
-| **Infrastructure** | Vercel (Front-end), Render (Back-end) |
+### Frontend
+* **Framework:** React 18 / Vite
+* **Styling & UI:** TailwindCSS, Framer Motion, Lucide-React
+* **State Management:** React Context API
+* **Charting:** Recharts / Custom SVG rings
 
 ---
 
-## 💻 Local Setup & Hackathon Evaluation
+## ⚙️ Getting Started (Local Development)
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/shashvatpatel15/SkillMatchr.git
-cd SkillMatchr
-```
+### 1. Prerequisites
+- Python 3.10+
+- Node.js 18+
+- A running PostgreSQL Database
 
-### 2. Environment Variables
-Create `.env` inside `/backend` using this template:
-```env
-# Database (Postgres)
-DATABASE_URL=postgresql+asyncpg://user:password@host:port/dbname
-# LLM Providers
-GEMINI_API_KEY=your_gemini_api_key_here
-# JWT Secret
-JWT_SECRET=your_super_secret_string
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
-# Allowed Origins
-CORS_ORIGIN=http://localhost:5173
-```
-Create `.env` inside `/frontend`:
-```env
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000/ws
-```
-
-### 3. Backend Generation
+### 2. Backend Setup
+Navigate to the root directory, then move into the backend foldler:
 ```bash
 cd backend
-python -m venv venv
-# Activate your venv:
-# `venv\Scripts\activate` on Windows || `source venv/bin/activate` on Mac
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn main:app --reload --port 8000
 ```
 
-### 4. Frontend Launch
+Create a virtual environment and install dependencies:
+```bash
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Set up your environment variables. Look at `.env.example` as a baseline and create your own `.env` file:
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/skillmatchr
+GEMINI_API_KEY=your_gemini_api_key_here
+JWT_SECRET=super_secret_jwt_string_for_dev
+CHROMA_PERSIST_DIR=chroma_data
+```
+
+Run database migrations and seed the taxonomy metadata:
+```bash
+alembic upgrade head
+python scripts/seed.py
+```
+
+Boot up the FastAPI server:
+```bash
+python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+*(The backend will run on `http://localhost:8000`. You can visit `http://localhost:8000/docs` to see the live OpenAPI specification).*
+
+---
+
+### 3. Frontend Setup
+Open a new terminal window and navigate to the frontend folder:
 ```bash
 cd frontend
+```
+
+Install dependencies and start the Vite development server:
+```bash
 npm install
 npm run dev
 ```
-
-### 🔬 Evaluating Benchmarks
-SkillMatchr meets high-performance grading criteria out-of-the-box. The system is optimized for parsing precision, NDCG, and low-latency ingestion.
-
-For a live check across the environment, run our benchmarking harness script:
-```bash
-cd backend
-python scripts/eval_benchmark.py
-```
+*(The React application will run on `http://localhost:5173`).*
 
 ---
 
-<div align="center">
-  <i>Built to bridge the talent gap through Autonomous Agentic AI.</i>
-</div>
+## 🗄️ Database Architecture
+- **Postgres:** Sits as the ultimate source of truth holding `Users`, `Candidates` (nested JSON representations), `Jobs`, `Shortlists`, and the complex `SkillTaxonomy` map.
+- **ChromaDB:** A dedicated local persistent store mapped strictly to UUIDs processing 768-1536 dimensional document embeddings to power semantic vector searches globally.
+
+---
+
+## ©️ Hackathon Scope
+This project was conceptualized and engineered for the **Multi-Agent AI & Talent Intelligence** Hackathon. 
+We directly address the Problem Statement of: *Extracting and normalizing skills against unstructured data to prevent poor keyword caching & enhance placement success rates.*
