@@ -1,11 +1,15 @@
 import asyncio
+import uuid
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
 from backend.core.auth import get_current_user
+from backend.core.database import get_db
 from backend.models.user import User
 from backend.schemas.ingest import UploadResponse, ParsedResume
 from backend.services.workflows.ingestion_graph import ingestion_graph
+from backend.services.activity import log_activity
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/ingest", tags=["Ingestion"])
 
@@ -22,6 +26,7 @@ BATCH_SEMAPHORE = asyncio.Semaphore(2)
 async def upload_resume(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
@@ -68,6 +73,17 @@ async def upload_resume(
     # Bust analytics cache so dashboard updates immediately
     from backend.core.cache import cache_invalidate
     await cache_invalidate(f"analytics:overview:{current_user.id}")
+
+    # Log activity
+    cand_id_str = result.get("candidate_id", "")
+    try:
+        await log_activity(
+            db, current_user.id, "uploaded_resume", "candidate",
+            entity_id=uuid.UUID(cand_id_str) if cand_id_str else None,
+            metadata={"filename": file.filename, "candidate_name": parsed.full_name},
+        )
+    except Exception:
+        pass  # Never fail the upload because of activity logging
 
     return UploadResponse(
         candidate_id=result["candidate_id"],
@@ -153,6 +169,7 @@ async def _process_single_file(
 async def upload_batch(
     files: list[UploadFile] = File(...),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Upload multiple resume files at once.
 
@@ -183,6 +200,15 @@ async def upload_batch(
         results.append(result)
 
     succeeded = sum(1 for r in results if r.status == "success")
+
+    # Log batch activity
+    try:
+        await log_activity(
+            db, current_user.id, "batch_upload", "candidate",
+            metadata={"total": len(results), "succeeded": succeeded, "failed": len(results) - succeeded},
+        )
+    except Exception:
+        pass
 
     return BatchUploadResponse(
         total=len(results),

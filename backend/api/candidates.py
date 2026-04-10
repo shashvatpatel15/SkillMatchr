@@ -15,6 +15,7 @@ from backend.schemas.candidate import (
     CandidateDetail,
     CandidateUpdate,
 )
+from backend.services.activity import log_activity
 
 router = APIRouter(prefix="/api/candidates", tags=["Candidates"])
 
@@ -231,6 +232,15 @@ async def update_candidate(
     await db.commit()
     await db.refresh(candidate)
 
+    try:
+        await log_activity(
+            db, current_user.id, "updated_candidate", "candidate",
+            entity_id=candidate.id,
+            metadata={"fields": list(update_data.keys()), "candidate_name": candidate.full_name},
+        )
+    except Exception:
+        pass
+
     return CandidateDetail(
         id=candidate.id,
         full_name=candidate.full_name,
@@ -292,11 +302,23 @@ async def delete_candidate(
         )
     )
 
+    candidate_name = candidate.full_name
+    cand_uuid = candidate.id
+
     await db.delete(candidate)
     await db.commit()
 
     # Bust analytics cache
     await cache_invalidate(f"analytics:overview:{current_user.id}")
+
+    try:
+        await log_activity(
+            db, current_user.id, "deleted_candidate", "candidate",
+            entity_id=cand_uuid,
+            metadata={"candidate_name": candidate_name},
+        )
+    except Exception:
+        pass
 
 
 @router.post("/{candidate_id}/reparse", response_model=CandidateDetail)
@@ -396,6 +418,15 @@ async def reparse_candidate(
 
     await db.commit()
     await db.refresh(candidate)
+
+    try:
+        await log_activity(
+            db, current_user.id, "reparsed_candidate", "candidate",
+            entity_id=candidate.id,
+            metadata={"candidate_name": candidate.full_name},
+        )
+    except Exception:
+        pass
 
     return CandidateDetail(
         id=candidate.id,

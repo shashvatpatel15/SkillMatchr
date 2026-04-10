@@ -8,14 +8,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 
 const ACTION_CONFIG = {
-  referral_created:        { icon: UserPlus,  color: 'bg-blue-50 text-blue-600 border-blue-200',    dot: 'bg-blue-500' },
-  created_shortlist:       { icon: Briefcase, color: 'bg-indigo-50 text-indigo-600 border-indigo-200', dot: 'bg-indigo-500' },
-  added_to_shortlist:      { icon: User,      color: 'bg-emerald-50 text-emerald-600 border-emerald-200', dot: 'bg-emerald-500' },
-  removed_from_shortlist:  { icon: User,      color: 'bg-red-50 text-red-600 border-red-200',       dot: 'bg-red-500' },
-  candidate_ingested:      { icon: Upload,    color: 'bg-cyan-50 text-cyan-600 border-cyan-200',    dot: 'bg-cyan-500' },
-  dedup_merged:            { icon: GitMerge,  color: 'bg-violet-50 text-violet-600 border-violet-200', dot: 'bg-violet-500' },
-  dedup_dismissed:         { icon: Eye,       color: 'bg-amber-50 text-amber-600 border-amber-200', dot: 'bg-amber-500' },
-  job_created:             { icon: Briefcase, color: 'bg-teal-50 text-teal-600 border-teal-200',    dot: 'bg-teal-500' },
+  uploaded_resume:           { icon: Upload,    color: 'bg-cyan-50 text-cyan-600 border-cyan-200',    dot: 'bg-cyan-500' },
+  batch_upload:              { icon: Upload,    color: 'bg-sky-50 text-sky-600 border-sky-200',       dot: 'bg-sky-500' },
+  deleted_candidate:         { icon: User,      color: 'bg-red-50 text-red-600 border-red-200',       dot: 'bg-red-500' },
+  updated_candidate:         { icon: FileText,  color: 'bg-amber-50 text-amber-600 border-amber-200', dot: 'bg-amber-500' },
+  reparsed_candidate:        { icon: Sparkles,  color: 'bg-purple-50 text-purple-600 border-purple-200', dot: 'bg-purple-500' },
+  referral_created:          { icon: UserPlus,  color: 'bg-blue-50 text-blue-600 border-blue-200',    dot: 'bg-blue-500' },
+  created_shortlist:         { icon: Briefcase, color: 'bg-indigo-50 text-indigo-600 border-indigo-200', dot: 'bg-indigo-500' },
+  added_to_shortlist:        { icon: User,      color: 'bg-emerald-50 text-emerald-600 border-emerald-200', dot: 'bg-emerald-500' },
+  removed_from_shortlist:    { icon: User,      color: 'bg-red-50 text-red-600 border-red-200',       dot: 'bg-red-500' },
+  candidate_ingested:        { icon: Upload,    color: 'bg-cyan-50 text-cyan-600 border-cyan-200',    dot: 'bg-cyan-500' },
+  dedup_merged:              { icon: GitMerge,  color: 'bg-violet-50 text-violet-600 border-violet-200', dot: 'bg-violet-500' },
+  dedup_dismissed:           { icon: Eye,       color: 'bg-amber-50 text-amber-600 border-amber-200', dot: 'bg-amber-500' },
+  job_created:               { icon: Briefcase, color: 'bg-teal-50 text-teal-600 border-teal-200',    dot: 'bg-teal-500' },
 };
 
 const DEFAULT_CONFIG = { icon: Activity, color: 'bg-slate-50 text-slate-600 border-slate-200', dot: 'bg-slate-400' };
