@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+env/
+
+# Vector DB Data
+chroma_data/
+
+# Environment Variables
+.env
+.env.local
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Vite / Frontend build
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+
+# OS/Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Misc logs
+*.log
