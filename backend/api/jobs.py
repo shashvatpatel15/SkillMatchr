@@ -159,6 +159,32 @@ async def compare_candidates_endpoint(
     )
 
 
+@router.put("/{job_id}", response_model=JobResponse)
+async def update_job(
+    job_id: uuid.UUID,
+    body: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a job's fields (e.g. status toggle open/closed)."""
+    job = (await db.execute(
+        select(Job).where(Job.id == job_id).where(Job.created_by == current_user.id)
+    )).scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    allowed_fields = {"title", "company", "department", "location", "employment_type",
+                      "experience_required", "salary_min", "salary_max", "skills_required",
+                      "job_description", "status"}
+    for field, value in body.items():
+        if field in allowed_fields:
+            setattr(job, field, value)
+
+    await db.commit()
+    await db.refresh(job)
+    return _job_to_response(job)
+
+
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_job(
     job_id: uuid.UUID,
