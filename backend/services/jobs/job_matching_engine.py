@@ -38,6 +38,12 @@ logger = logging.getLogger(__name__)
 
 _VALID_STATUSES = ["completed", "ingested", "needs_review", "pending_review"]
 
+# ── In-process LRU cache for job embeddings ─────────────────
+# Avoids repeat Gemini API calls for the same job within a server lifetime.
+# Key: str(job.id), Value: list[float]
+_JOB_EMB_CACHE: dict[str, list[float]] = {}
+_JOB_EMB_CACHE_MAX = 512  # evict oldest when full
+
 
 def generate_job_embedding(job: Job) -> list[float]:
     """Generate embedding for a job by combining title + description + skills."""
@@ -159,23 +165,29 @@ async def match_candidates_to_job(
     """
     import asyncio
 
+    job_id_str = str(job.id)
     job_skills = job.skills_required if isinstance(job.skills_required, list) else []
+
+    # 1. Fast path: DB embedding already loaded by SQLAlchemy
     job_emb = list(job.embedding) if job.embedding is not None else None
 
+    # 2. Second-fastest: in-process memory cache (survives across requests)
+    if job_emb is None:
+        job_emb = _JOB_EMB_CACHE.get(job_id_str)
+
+    # 3. Slow path: call Gemini API (only on first ever match for this job)
     if job_emb is None:
         logger.info("Job '%s' has no embedding, generating now", job.title)
         try:
-            # Run in executor to avoid blocking the event loop
             loop = asyncio.get_running_loop()
             job_emb = await loop.run_in_executor(None, generate_job_embedding, job)
-            # Save embedding to DB for future use
+            # Persist to DB so we never call Gemini again for this job
             job.embedding = job_emb
             session.add(job)
             await session.commit()
             await session.refresh(job)
-            # Also store in ChromaDB
             upsert_job_embedding(
-                job_id=str(job.id),
+                job_id=job_id_str,
                 embedding=job_emb,
                 metadata={"user_id": user_id or "", "title": job.title or ""},
             )
@@ -183,16 +195,26 @@ async def match_candidates_to_job(
             logger.warning("Failed to generate job embedding: %s", e)
             job_emb = None
 
+    # Store in process-level cache regardless of source
+    if job_emb is not None:
+        if len(_JOB_EMB_CACHE) >= _JOB_EMB_CACHE_MAX:
+            # Evict the oldest entry (FIFO)
+            _JOB_EMB_CACHE.pop(next(iter(_JOB_EMB_CACHE)))
+        _JOB_EMB_CACHE[job_id_str] = job_emb
+
     scored: list[dict] = []
     seen_ids: set[str] = set()
 
     # ── Pass 1: ChromaDB semantic ranking ────────────────────────────
+    # Request only (top_k * 3) results — ChromaDB ANN is fast but returning
+    # 200 rows when we only need 20 wastes time on DB hydration.
+    chroma_fetch = min(top_k * 3, 60)  # cap at 60; more than enough
     if job_emb is not None:
         try:
             chroma_where = {"user_id": user_id} if user_id else None
             chroma_results = query_similar_candidates(
                 query_embedding=job_emb,
-                n_results=200,
+                n_results=chroma_fetch,
                 where=chroma_where,
             )
 
@@ -242,55 +264,60 @@ async def match_candidates_to_job(
         except Exception as e:
             logger.warning("ChromaDB semantic pass failed: %s", e)
 
-    # ── Pass 2: Non-semantic fallback (all remaining candidates) ─────
-    user_filter = [Candidate.created_by == _uuid_mod.UUID(user_id)] if user_id else []
-    stmt = (
-        select(Candidate)
-        .where(and_(
-            Candidate.ingestion_status.in_(_VALID_STATUSES),
-            *user_filter,
-        ))
-        .limit(500)
-    )
-    result = await session.execute(stmt)
-    all_candidates = result.scalars().all()
+    # ── Pass 2: Fallback for candidates without embeddings ───────────
+    # Skip entirely if Pass 1 already found enough high-quality results.
+    # This avoids a full table scan + ChromaDB batch fetch in the common case.
+    if len(scored) >= top_k:
+        logger.debug("Skipping Pass 2: semantic pass returned %d results (need %d)", len(scored), top_k)
+    else:
+        user_filter = [Candidate.created_by == _uuid_mod.UUID(user_id)] if user_id else []
+        stmt = (
+            select(Candidate)
+            .where(and_(
+                Candidate.ingestion_status.in_(_VALID_STATUSES),
+                *user_filter,
+            ))
+            .limit(100)  # cap at 100; scoring 500 rows for ~20 results is wasteful
+        )
+        result = await session.execute(stmt)
+        all_candidates = result.scalars().all()
 
-    # Batch-load embeddings from ChromaDB instead of N+1 individual calls
-    remaining = [c for c in all_candidates if str(c.id) not in seen_ids]
-    emb_map: dict[str, list[float]] = {}
-    if remaining:
-        try:
-            batch_ids = [str(c.id) for c in remaining]
-            col = get_candidates_collection()
-            batch_result = col.get(ids=batch_ids, include=["embeddings"])
-            if batch_result and batch_result.get("ids") and batch_result.get("embeddings"):
-                for bid, bemb in zip(batch_result["ids"], batch_result["embeddings"]):
-                    if bemb:
-                        emb_map[bid] = bemb
-        except Exception:
-            pass  # Fall back to no semantic for remaining
+        # Batch-load embeddings from ChromaDB instead of N+1 individual calls
+        remaining = [c for c in all_candidates if str(c.id) not in seen_ids]
+        emb_map: dict[str, list[float]] = {}
+        if remaining:
+            try:
+                batch_ids = [str(c.id) for c in remaining]
+                col = get_candidates_collection()
+                batch_result = col.get(ids=batch_ids, include=["embeddings"])
+                if batch_result and batch_result.get("ids") and batch_result.get("embeddings"):
+                    for bid, bemb in zip(batch_result["ids"], batch_result["embeddings"]):
+                        if bemb:
+                            emb_map[bid] = bemb
+            except Exception:
+                pass  # Fall back to no semantic for remaining
 
-    for candidate in remaining:
-        cid = str(candidate.id)
-        seen_ids.add(cid)
+        for candidate in remaining:
+            cid = str(candidate.id)
+            seen_ids.add(cid)
 
-        cand_emb = emb_map.get(cid)
-        semantic = _compute_semantic_similarity(cand_emb, job_emb)
+            cand_emb = emb_map.get(cid)
+            semantic = _compute_semantic_similarity(cand_emb, job_emb)
 
-        skill = _compute_skill_match(candidate.skills, job_skills)
-        if skill == 0.0:
-            skill = _compute_skill_match_from_text(candidate.raw_text, candidate.summary, job_skills)
-        experience = _compute_experience_match(candidate.years_experience, job.experience_required)
-        title = _compute_title_relevance(candidate.current_title, job.title)
+            skill = _compute_skill_match(candidate.skills, job_skills)
+            if skill == 0.0:
+                skill = _compute_skill_match_from_text(candidate.raw_text, candidate.summary, job_skills)
+            experience = _compute_experience_match(candidate.years_experience, job.experience_required)
+            title = _compute_title_relevance(candidate.current_title, job.title)
 
-        # When no semantic signal, redistribute weight to skill + experience
-        if semantic == 0.0:
-            composite = 0.45 * skill + 0.30 * experience + 0.15 * title + 0.10 * 0.3
-        else:
-            composite = 0.50 * semantic + 0.25 * skill + 0.15 * experience + 0.10 * title
+            # When no semantic signal, redistribute weight to skill + experience
+            if semantic == 0.0:
+                composite = 0.45 * skill + 0.30 * experience + 0.15 * title + 0.10 * 0.3
+            else:
+                composite = 0.50 * semantic + 0.25 * skill + 0.15 * experience + 0.10 * title
 
-        missing_skills = _compute_skill_gap(candidate.skills, job_skills)
-        scored.append(_build_result(candidate, composite, semantic, skill, experience, title, missing_skills))
+            missing_skills = _compute_skill_gap(candidate.skills, job_skills)
+            scored.append(_build_result(candidate, composite, semantic, skill, experience, title, missing_skills))
 
     # Sort by composite descending, filter dynamically by configurable threshold
     scored.sort(key=lambda x: x["composite_score"], reverse=True)
