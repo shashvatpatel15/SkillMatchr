@@ -157,13 +157,17 @@ async def match_candidates_to_job(
       Pass 2: Non-semantic — ALL remaining candidates scored by skill/exp/title
     Merge, sort by composite, return top_k.
     """
+    import asyncio
+
     job_skills = job.skills_required if isinstance(job.skills_required, list) else []
     job_emb = list(job.embedding) if job.embedding is not None else None
 
     if job_emb is None:
         logger.info("Job '%s' has no embedding, generating now", job.title)
         try:
-            job_emb = generate_job_embedding(job)
+            # Run in executor to avoid blocking the event loop
+            loop = asyncio.get_running_loop()
+            job_emb = await loop.run_in_executor(None, generate_job_embedding, job)
             # Save embedding to DB for future use
             job.embedding = job_emb
             session.add(job)
