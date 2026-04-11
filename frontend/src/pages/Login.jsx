@@ -227,7 +227,7 @@ export default function Login() {
             <span className="text-xl font-bold text-slate-900 tracking-tight">SkillMatchr</span>
           </div>
 
-          {/* Render Cold Start Notice */}
+          {/* Render Cold Start Notice
           <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150 fill-mode-both">
             <AlertCircle className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
             <div>
@@ -236,7 +236,7 @@ export default function Login() {
                 The backend for this site runs on a free Render instance which spins down after inactivity. Please be aware that your initial request may take <strong>50 seconds or more</strong> to wake the server.
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Card */}
           <div className="bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-slate-100/80 p-8 sm:p-10">
